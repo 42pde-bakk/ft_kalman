@@ -15,8 +15,10 @@ enum class MessageType {
 	ACCELERATION,
 	DIRECTION,
 	TRUE_POSITION,
+
 };
 
+std::string MessageTypeToString(MessageType type);
 
 class Message {
 	MessageType _messageType{};
@@ -25,11 +27,17 @@ class Message {
 
 public:
 	Message() = default;
-	Message(const std::string& msg);
+	Message(const std::string& msg); // NOLINT(*-explicit-constructor)
 
 	Message(const Message& other) = default;
 	Message& operator=(const Message& other) = default;
 	~Message() = default;
+
+	[[nodiscard]] MessageType get_message_type() const;
+
+	[[nodiscard]] const std::vector<double>& get_data() const;
+
+	friend std::ostream& operator<<(std::ostream& o, const Message& msg);
 
 };
 

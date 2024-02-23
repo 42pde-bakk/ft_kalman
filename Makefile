@@ -1,6 +1,6 @@
 NAME = ft_kalman
 
-INC_DIR = ./include
+INC_DIR = ./srcs
 SRC_DIR = ./srcs
 OBJ_DIR = ./obj
 SRC_EXT = cpp

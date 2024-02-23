@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <cstring>
 #include "Message.hpp"
 
 MessageType parseMessageTypeFromString(const std::string& str) {
@@ -23,20 +24,6 @@ MessageType parseMessageTypeFromString(const std::string& str) {
 	return MessageType::MSG_END;
 }
 
-
-std::vector<std::string>	split(const std::string& s, const std::string& delim) {
-	size_t start, end = 0;
-	std::vector<std::string> vec;
-
-	while (end != std::string::npos) {
-		start = s.find_first_not_of(delim, end);
-		end = s.find_first_of(delim, start);
-		if (end != std::string::npos || start != std::string::npos)
-			vec.push_back(s.substr(start, end - start));
-	}
-	return vec;
-}
-
 Message::Message(const std::string& msg) {
 	if (msg == "MSG_START") {
 		this->_messageType = MessageType::MSG_START;
@@ -45,20 +32,56 @@ Message::Message(const std::string& msg) {
 	} else if (msg.find("Trajectory Generat") != std::string::npos) {
 	} else {
 		size_t	fpos = msg.find('['),
-				lpos = msg.find(']');
-		this->_timestamp = msg.substr(fpos + 1, lpos - fpos);
-		this->_messageType = parseMessageTypeFromString(msg.substr(fpos + 1));
-		std::cerr << "timestamp: " << _timestamp << ", msgtype = " << msg.substr(lpos + 1) << "\n";
-		const char* start = msg.c_str();
+				lpos = msg.find(']'),
+				newlinepos = msg.find('\n');
+		this->_timestamp = msg.substr(fpos + 1, lpos - fpos - 1);
+		const auto type = msg.substr(lpos + 1, newlinepos - lpos - 1);
+		this->_messageType = parseMessageTypeFromString(type);
+//		std::cerr << "timestamp: {" << _timestamp << "}, msgtype = " << type << "!\n";
+		const char* start = msg.c_str() + newlinepos + 1;
 		char* pend;
 		do {
 			double d = std::strtod(start, &pend);
 			this->data.push_back(d);
-			start = pend;
-		} while (pend != nullptr);
+			start = pend + 1;
+		} while (strlen(pend) > 1);
 
-		for (const auto& d : this->data) {
-			printf("d = %f", d);
-		}
+//		for (const auto& d : this->data) {
+//			printf("\td = %f\n", d);
+//		}
 	}
+}
+
+MessageType Message::get_message_type() const {
+	return (this->_messageType);
+}
+
+const std::vector<double>& Message::get_data() const {
+	return (this->data);
+}
+
+std::ostream& operator<<(std::ostream& o, const Message& msg) {
+	o << "Message:\n";
+	o << "\tType: " << MessageTypeToString(msg._messageType) << "\n";
+	o << "\tTimestamp: " << msg._timestamp << "\n";
+	o << "\tdata: [ ";
+	for (const auto& value : msg.data) {
+		o << value << " ";
+	}
+	o << "]\n";
+
+	return (o);
+}
+
+std::string MessageTypeToString(MessageType type) {
+	static const std::string strings[] = {
+			"MSG_START",
+			"MSG_END",
+			"SPEED",
+			"ACCELERATION",
+			"DIRECTION",
+			"TRUE_POSITION"
+	};
+
+	return (strings[(int)type]);
 }
