@@ -26,7 +26,8 @@ void init_serveraddr(struct sockaddr_in* serverAddr) {
 
 void perform_handshake(const int socket_fd, struct sockaddr_in* serverAddr) {
 	const char* handshake = "READY";
-	const ssize_t result = sendto(socket_fd, handshake, strlen(handshake), 0, (struct sockaddr*)serverAddr, sizeof(*serverAddr));
+	const ssize_t result = sendto(socket_fd, handshake, strlen(handshake), 0, (struct sockaddr*) serverAddr,
+								  sizeof(*serverAddr));
 
 	if (result == -1) {
 		perror("sendto");
@@ -37,7 +38,7 @@ void perform_handshake(const int socket_fd, struct sockaddr_in* serverAddr) {
 Message get_message(const int socket_fd, struct sockaddr_in* serverAddr) {
 	char buffer[1024];
 	socklen_t addr_len = sizeof(*serverAddr);
-	const ssize_t res = recvfrom(socket_fd, buffer, sizeof(buffer), 0, (struct sockaddr *)serverAddr, &addr_len);
+	const ssize_t res = recvfrom(socket_fd, buffer, sizeof(buffer), 0, (struct sockaddr*) serverAddr, &addr_len);
 
 	if (res == -1) {
 		perror("recvfrom");
@@ -90,7 +91,8 @@ void send_data(const int socket_fd, struct sockaddr_in* serverAddr, const Matrix
 		}
 	}
 
-	const ssize_t result = sendto(socket_fd, state_str.c_str(), state_str.length(), 0, (struct sockaddr*)serverAddr, sizeof(*serverAddr));
+	const ssize_t result = sendto(socket_fd, state_str.c_str(), state_str.length(), 0, (struct sockaddr*) serverAddr,
+								  sizeof(*serverAddr));
 	std::cerr << "sent state_str, result = " << result << "\n";
 	if (result == -1) {
 		perror("sendto");

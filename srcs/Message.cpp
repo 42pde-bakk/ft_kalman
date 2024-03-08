@@ -31,7 +31,7 @@ Message::Message(const std::string& msg) {
 		this->_messageType = MessageType::MSG_END;
 	} else if (msg.find("Trajectory Generat") != std::string::npos) {
 	} else {
-		size_t	fpos = msg.find('['),
+		size_t fpos = msg.find('['),
 				lpos = msg.find(']'),
 				newlinepos = msg.find('\n');
 		this->_timestamp = msg.substr(fpos + 1, lpos - fpos - 1);
@@ -65,7 +65,7 @@ std::ostream& operator<<(std::ostream& o, const Message& msg) {
 	o << "\tType: " << MessageTypeToString(msg._messageType) << "\n";
 	o << "\tTimestamp: " << msg._timestamp << "\n";
 	o << "\tdata: [ ";
-	for (const auto& value : msg.data) {
+	for (const auto& value: msg.data) {
 		o << value << " ";
 	}
 	o << "]\n";
@@ -83,5 +83,5 @@ std::string MessageTypeToString(MessageType type) {
 			"TRUE_POSITION"
 	};
 
-	return (strings[(int)type]);
+	return (strings[(int) type]);
 }

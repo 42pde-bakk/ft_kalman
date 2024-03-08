@@ -1,6 +1,7 @@
 # ft_kalman
 
-https://www.robotsforroboticists.com/kalman-filtering/
-https://codingcorner.org/kalman-filter-cpp-eigen-cmake/
+# Good explanation of what all the variables mean:
+https://cheever.domains.swarthmore.edu/Ref/Kalman/MatrixKalman.html
 
-https://www.embedded.com/kalman-filtering/
+
+# Nice short intro series on kalman filters: https://www.youtube.com/watch?v=5Y-dnt2tNKY

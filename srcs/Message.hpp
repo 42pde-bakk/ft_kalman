@@ -22,15 +22,18 @@ std::string MessageTypeToString(MessageType type);
 
 class Message {
 	MessageType _messageType{};
-	std::string	_timestamp{};
-	std::vector<double>	data{};
+	std::string _timestamp{};
+	std::vector<double> data{};
 
 public:
 	Message() = default;
+
 	Message(const std::string& msg); // NOLINT(*-explicit-constructor)
 
 	Message(const Message& other) = default;
+
 	Message& operator=(const Message& other) = default;
+
 	~Message() = default;
 
 	[[nodiscard]] MessageType get_message_type() const;

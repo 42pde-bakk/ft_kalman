@@ -13,14 +13,30 @@
 #include <cassert>
 
 
-template <typename T, size_t ROW_AMOUNT, size_t COLUMN_AMOUNT>
+template<typename T, size_t ROW_AMOUNT, size_t COLUMN_AMOUNT>
 class Matrix {
 	std::array<std::array<T, COLUMN_AMOUNT>, ROW_AMOUNT> data;
 
 public:
-
+	template <typename> friend class Matrix;
 	Matrix() = default;
 
+	Matrix(const Matrix& rhs) = default;
+
+	Matrix(const std::vector<double>& vec) {
+		assert(vec.size() == ROW_AMOUNT);
+		for (size_t row = 0; row < ROW_AMOUNT; row++) {
+			this->data[row][0] = vec[row];
+		}
+	}
+
+	[[nodiscard]] size_t get_row_amount() const {
+		return (ROW_AMOUNT);
+	}
+
+	[[nodiscard]] size_t get_column_amount() const {
+		return (COLUMN_AMOUNT);
+	}
 
 	void set_vector(const std::vector<T>& v) {
 		assert(v.size() == ROW_AMOUNT);
@@ -33,10 +49,10 @@ public:
 		return (this->data[i]);
 	}
 
-	template <size_t R, size_t C>
+	template<size_t R, size_t C>
 	Matrix operator*(const Matrix<T, R, C>& rhs) {
 		assert(COLUMN_AMOUNT == R);
-		Matrix<T, ROW_AMOUNT, COLUMN_AMOUNT>	out;
+		Matrix<T, ROW_AMOUNT, COLUMN_AMOUNT> out;
 
 		for (size_t a = 0; a < ROW_AMOUNT; a++) {
 			for (size_t b = 0; b < C; b++) {
@@ -50,7 +66,7 @@ public:
 		return (out);
 	}
 
-	Matrix	operator*(T scalar) const {
+	Matrix operator*(T scalar) const {
 		Matrix out(*this);
 
 		for (size_t row = 0; row < ROW_AMOUNT; row++) {
@@ -61,19 +77,18 @@ public:
 		return (out);
 	}
 
-	[[nodiscard]] Matrix	transpose() const {
-		Matrix<T, COLUMN_AMOUNT, ROW_AMOUNT>	out;
+	[[nodiscard]] Matrix transpose() const {
+		Matrix<T, COLUMN_AMOUNT, ROW_AMOUNT> out;
 
 		for (size_t row = 0; row < ROW_AMOUNT; row++) {
 			for (size_t column = 0; column < COLUMN_AMOUNT; column++) {
-				out[column][row] = this->data[row][column];
+				out.data[column][row] = this->data[row][column];
 			}
 		}
 		return (out);
 	}
 
-
-	friend std::ostream&	operator<<(std::ostream& o, const Matrix& m) {
+	friend std::ostream& operator<<(std::ostream& o, const Matrix& m) {
 		for (size_t row = 0; row < ROW_AMOUNT; row++) {
 			for (size_t column = 0; column < COLUMN_AMOUNT; column++) {
 				o << std::setprecision(5) << m.data[row][column] << ' ';
@@ -82,9 +97,22 @@ public:
 		}
 		return (o);
 	}
+
+	template<size_t R>
+	[[nodiscard]] Matrix<double, ROW_AMOUNT + R, COLUMN_AMOUNT>	vstack(const Matrix<T, R, COLUMN_AMOUNT>& rhs) const {
+		Matrix<double, ROW_AMOUNT + R, COLUMN_AMOUNT> out;
+		for (size_t r = 0; r < R; r++) {
+			out.data[r] = this->data[r];
+		}
+		for (size_t r = 0; r < R; r++) {
+			out.data[R + r] = rhs.data[r];
+		}
+		return (out);
+	}
+
 };
 
-template <typename T, size_t ROW_AMOUNT_VEC>
+template<typename T, size_t ROW_AMOUNT_VEC>
 using Vector = Matrix<T, ROW_AMOUNT_VEC, 1>;
 using Vector3d = Matrix<double, 3, 1>;
 
