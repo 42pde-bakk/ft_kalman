@@ -86,5 +86,6 @@ public:
 
 template <typename T, size_t ROW_AMOUNT_VEC>
 using Vector = Matrix<T, ROW_AMOUNT_VEC, 1>;
+using Vector3d = Matrix<double, 3, 1>;
 
 #endif //FT_KALMAN_MATRIX_HPP

@@ -7,9 +7,9 @@
 #include "Matrix.hpp"
 
 class Data {
-	Matrix<double, 3, 1> position;
-	Matrix<double, 3, 1> direction;
-	Matrix<double, 3, 1> acceleration;
+	Vector3d	position;
+	Vector3d	direction;
+	Vector3d	acceleration;
 	double speed;
 
 public:
