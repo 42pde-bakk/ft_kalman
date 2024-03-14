@@ -18,7 +18,7 @@ class Matrix {
 	std::array<std::array<T, COLUMN_AMOUNT>, ROW_AMOUNT> data;
 
 public:
-	template <typename> friend class Matrix;
+	template <typename, size_t, size_t> friend class Matrix;
 	Matrix() = default;
 
 	Matrix(const Matrix& rhs) = default;
