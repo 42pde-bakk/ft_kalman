@@ -48,6 +48,9 @@ public:
 	const std::array<T, COLUMN_AMOUNT>& operator[](size_t i) const {
 		return (this->data[i]);
 	}
+	std::array<T, COLUMN_AMOUNT>& operator[](size_t i) {
+		return (this->data[i]);
+	}
 
 	template<size_t R, size_t C>
 	Matrix operator*(const Matrix<T, R, C>& rhs) {

@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include "Timestamp.hpp"
 
 enum class MessageType {
 	MSG_START,
@@ -22,7 +23,7 @@ std::string MessageTypeToString(MessageType type);
 
 class Message {
 	MessageType _messageType{};
-	std::string _timestamp{};
+	Timestamp _timestamp{};
 	std::vector<double> data{};
 
 public:

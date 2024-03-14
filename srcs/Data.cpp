@@ -32,3 +32,11 @@ std::ostream& operator<<(std::ostream& o, const Data& d) {
 const Matrix<double, 3, 1>& Data::get_position() const {
 	return (this->position);
 }
+
+const Matrix<double, 3, 1>& Data::get_direction() const {
+	return (this->direction);
+}
+
+const Matrix<double, 3, 1>& Data::get_acceleration() const {
+	return (this->acceleration);
+}

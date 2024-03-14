@@ -31,6 +31,8 @@ public:
 	void set_speed(double sp);
 
 	[[nodiscard]] const Matrix<double, 3, 1>& get_position() const;
+	[[nodiscard]] const Matrix<double, 3, 1>& get_direction() const;
+	[[nodiscard]] const Matrix<double, 3, 1>& get_acceleration() const;
 
 	friend std::ostream& operator<<(std::ostream& o, const Data& d);
 };

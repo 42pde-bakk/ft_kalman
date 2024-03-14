@@ -6,6 +6,7 @@
 #define FT_KALMAN_KALMANFILTER_HPP
 
 #include "Matrix.hpp"
+#include "Data.hpp"
 
 #define n 9 // n is the amount of state variables
 // n: [x, y, z, vx, vy, vz, and three rotations]
@@ -31,12 +32,13 @@ class KalmanFilter {
 	Matrix<double, n, n> Pplus; // a posteriori covariance
 	Matrix<double, n, m> K; // Kalman Filter Gain
 
+	KalmanFilter() = default;
 public:
-	KalmanFilter();
+	explicit KalmanFilter(const Data& data);
 
 	Vector3d predict(double time_step, const Vector3d& acceleration);
 
-	[[nodiscard]] const Vector<double, 9>& get_state() const;
+	[[nodiscard]] const Vector<double, n>& get_state() const;
 
 };
 

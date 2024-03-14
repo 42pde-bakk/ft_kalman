@@ -34,7 +34,7 @@ Message::Message(const std::string& msg) {
 		size_t fpos = msg.find('['),
 				lpos = msg.find(']'),
 				newlinepos = msg.find('\n');
-		this->_timestamp = msg.substr(fpos + 1, lpos - fpos - 1);
+		this->_timestamp.set(msg.substr(fpos + 1, lpos - fpos - 1));
 		const auto type = msg.substr(lpos + 1, newlinepos - lpos - 1);
 		this->_messageType = parseMessageTypeFromString(type);
 //		std::cerr << "timestamp: {" << _timestamp << "}, msgtype = " << type << "!\n";

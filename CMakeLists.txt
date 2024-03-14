@@ -10,4 +10,7 @@ add_executable(ft_kalman srcs/main.cpp
         srcs/Data.hpp
         srcs/Matrix.hpp
         srcs/KalmanFilter.cpp
-        srcs/KalmanFilter.hpp)
+        srcs/KalmanFilter.hpp
+        srcs/Timestamp.cpp
+        srcs/Timestamp.hpp
+        srcs/ft_split.cpp)
