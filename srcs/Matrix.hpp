@@ -23,8 +23,20 @@ public:
 
 	Matrix(const Matrix& rhs) = default;
 
-	Matrix(const std::vector<double>& vec) {
-		assert(vec.size() == ROW_AMOUNT);
+	Matrix(const std::array<std::array<T, COLUMN_AMOUNT>, ROW_AMOUNT>& outer_array) {
+		for (size_t row = 0; row < ROW_AMOUNT; row++) {
+			this->data[row] = outer_array[row];
+		}
+	}
+
+	Matrix(const std::vector<T>& vec) {
+		assert(ROW_AMOUNT == vec.size());
+		assert(COLUMN_AMOUNT == 1);
+		for (size_t row = 0; row < ROW_AMOUNT; row++) {
+			this->data[row][0] = vec[row];
+		}
+	}
+	Matrix(const std::array<T, ROW_AMOUNT>& vec) {
 		for (size_t row = 0; row < ROW_AMOUNT; row++) {
 			this->data[row][0] = vec[row];
 		}
@@ -117,6 +129,6 @@ public:
 
 template<typename T, size_t ROW_AMOUNT_VEC>
 using Vector = Matrix<T, ROW_AMOUNT_VEC, 1>;
-using Vector3d = Matrix<double, 3, 1>;
+using Vector3d = Matrix<double, 3, 1>; // 3 rows * 1 column
 
 #endif //FT_KALMAN_MATRIX_HPP

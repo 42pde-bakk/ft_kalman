@@ -116,14 +116,16 @@ int main() {
 	KalmanFilter	filter(data);
 
 	of << " DONE PARSING INITIAL DATA\n";
+	of << '\n' << data << '\n';
+	std::cerr << '\n' << data << '\n';
 	std::cerr << "Lets start the messaging loop!\n";
 	int i = 0;
 	while (true) {
 		Message msg = get_message(socket_fd, &serverAddr);
 		std::cerr << "[" << i << "] " << msg << "\n";
-
 //		send_data(socket_fd, &serverAddr, data.get_position());
-		send_data(socket_fd, &serverAddr, filter.predict(1.0, data.get_acceleration()));
+		const auto mat = filter.predict(1.0, data.get_acceleration());
+		send_data(socket_fd, &serverAddr, mat);
 		i += 1;
 		if (i > 10)
 			break;

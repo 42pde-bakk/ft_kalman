@@ -6,6 +6,7 @@
 #define FT_KALMAN_DATA_HPP
 
 #include "Matrix.hpp"
+#define DT 0.01
 
 class Data {
 	Vector3d position;
@@ -33,6 +34,9 @@ public:
 	[[nodiscard]] const Matrix<double, 3, 1>& get_position() const;
 	[[nodiscard]] const Matrix<double, 3, 1>& get_direction() const;
 	[[nodiscard]] const Matrix<double, 3, 1>& get_acceleration() const;
+	[[nodiscard]] double get_acceleration(size_t row_nb, size_t col_nb) const;
+
+	[[nodiscard]] Vector3d calculate_velocity() const;
 
 	friend std::ostream& operator<<(std::ostream& o, const Data& d);
 };
