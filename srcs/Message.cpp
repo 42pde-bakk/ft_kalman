@@ -6,6 +6,7 @@
 #include <sstream>
 #include <cstring>
 #include "Message.hpp"
+#include <cassert>
 
 MessageType parseMessageTypeFromString(const std::string& str) {
 	if (str == "MSG_START") {
@@ -34,6 +35,11 @@ Message::Message(const std::string& msg) {
 		size_t fpos = msg.find('['),
 				lpos = msg.find(']'),
 				newlinepos = msg.find('\n');
+
+		assert(fpos != std::string::npos);
+		assert(lpos != std::string::npos);
+		assert(newlinepos != std::string::npos);
+
 		this->_timestamp.set(msg.substr(fpos + 1, lpos - fpos - 1));
 		const auto type = msg.substr(lpos + 1, newlinepos - lpos - 1);
 		this->_messageType = parseMessageTypeFromString(type);
