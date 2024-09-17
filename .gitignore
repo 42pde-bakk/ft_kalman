@@ -33,5 +33,4 @@
 
 .idea/
 cmake-build-debug/
-imu-sensor-stream-linux
 ft_kalman

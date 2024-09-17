@@ -124,6 +124,10 @@ int main() {
 
 	auto last_timestamp_at = Timestamp();
 
+
+	auto state_transition_matrix = filter.get_state_transition_matrix(1.0);
+	std::cerr << state_transition_matrix << "\n";
+
 	while (true) {
 		Message msg = get_message(socket_fd, &serverAddr);
 		std::cerr << "[" << i << "] " << msg << "\n";
@@ -138,7 +142,6 @@ int main() {
 		if (i > 10)
 			break;
 	}
-
 
 	return EXIT_SUCCESS;
 }

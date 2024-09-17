@@ -103,16 +103,6 @@ public:
 		return (out);
 	}
 
-	friend std::ostream& operator<<(std::ostream& o, const Matrix& m) {
-		for (size_t row = 0; row < ROW_AMOUNT; row++) {
-			for (size_t column = 0; column < COLUMN_AMOUNT; column++) {
-				o << std::setprecision(5) << m.data[row][column] << ' ';
-			}
-			o << '\n';
-		}
-		return (o);
-	}
-
 	template<size_t R>
 	[[nodiscard]] Matrix<double, ROW_AMOUNT + R, COLUMN_AMOUNT>	vstack(const Matrix<T, R, COLUMN_AMOUNT>& rhs) const {
 		Matrix<double, ROW_AMOUNT + R, COLUMN_AMOUNT> out;
@@ -134,7 +124,19 @@ public:
 		return (out);
 	}
 
+	friend std::ostream&	operator<<(std::ostream& o, const Matrix& m) {
+		for (size_t row_nb = 0; row_nb < ROW_AMOUNT; row_nb++) {
+			o << "[";
+			for (size_t col_nb = 0; col_nb < COLUMN_AMOUNT; col_nb++) {
+				o << m.data[row_nb][col_nb] << ' ';
+			}
+			o << "]\n";
+		}
+		return (o);
+	}
+
 };
+
 
 template<typename T, size_t ROW_AMOUNT_VEC>
 using Vector = Matrix<T, ROW_AMOUNT_VEC, 1>;
