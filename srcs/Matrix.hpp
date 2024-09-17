@@ -64,13 +64,13 @@ public:
 		return (this->data[i]);
 	}
 
-	template<size_t R, size_t C>
-	Matrix operator*(const Matrix<T, R, C>& rhs) {
-		assert(COLUMN_AMOUNT == R);
-		Matrix<T, ROW_AMOUNT, COLUMN_AMOUNT> out;
+	template<size_t ROW_AMOUNT_2, size_t COLUMN_AMOUNT_2>
+	Matrix<T, ROW_AMOUNT, COLUMN_AMOUNT_2> operator*(const Matrix<T, ROW_AMOUNT_2, COLUMN_AMOUNT_2>& rhs) {
+		assert(COLUMN_AMOUNT == ROW_AMOUNT_2);
+		Matrix<T, ROW_AMOUNT, COLUMN_AMOUNT_2> out;
 
 		for (size_t a = 0; a < ROW_AMOUNT; a++) {
-			for (size_t b = 0; b < C; b++) {
+			for (size_t b = 0; b < COLUMN_AMOUNT_2; b++) {
 				for (size_t p = 0; p < COLUMN_AMOUNT; p++) {
 					out[a][b] = std::fma(this->data[a][p], rhs.data[p][b], out.data[a][b]);
 //					out[a][b] = std::fma((*this)[a][p], rhs[p][b], out[a][b]); // fma = fast multiply-add

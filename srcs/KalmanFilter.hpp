@@ -8,29 +8,29 @@
 #include "Matrix.hpp"
 #include "Data.hpp"
 
-#define n 9 // n is the amount of state variables
-// n: [x, y, z, vx, vy, vz, and three rotations]
+#define n 10 // n is the amount of state variables
+// n: 3 positions, 3 directions, 3 accelerations, 1 speed
+// n: [x, y, z, dir, v, acc_x, acc_y, acc_z] (no direction because they won't ever change)
 #define p 3 // p is the amount of inputs
 // p: []
 #define m 3 // m is the amount of outputs
 // m: []
 
-
+#define NOISE 1
+#define GPS_NOISE (NOISE * 0.1)
+#define GYROSCOPE_NOISE (NOISE * 0.01)
+#define ACCELEROMETER_NOISE (NOISE * 0.001)
 
 class KalmanFilter {
 	Vector<double, n> state{};
 	unsigned int k;
 	// Matrices
-	Matrix<double, n, n> A; // state gain
-	Matrix<double, n, p> B; // input gain
-	Matrix<double, m, n> H; // output gain
-	Vector<double, n> w; // process noise
-	Matrix<double, n, n> Q; // process noise covariance
-	Vector<double, m> v; // measurement noise
-	Matrix<double, m, m> R; // measurement noise covariance
-	Matrix<double, n, n> Pmin; // a priori covariance
-	Matrix<double, n, n> Pplus; // a posteriori covariance
-	Matrix<double, n, m> K; // Kalman Filter Gain
+	Matrix<double, n, n> state_covariance_matrix;
+	Matrix<double, n, n> state_transition_matrix;
+	Matrix<double, m, n> state_to_measurement_matrix;
+	Matrix<double, m, m> measurement_covariance_matrix;
+	Matrix<double, n, n> process_noise_covariance_matrix;
+	Matrix<double, n, m> kalman_gain_matrix;
 
 	KalmanFilter() = default;
 public:

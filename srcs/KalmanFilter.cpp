@@ -4,7 +4,21 @@
 
 #include "KalmanFilter.hpp"
 
-KalmanFilter::KalmanFilter(const Data& data) : state(data.get_position().vstack(data.get_direction()).vstack(data.get_acceleration())) {
+KalmanFilter::KalmanFilter(const Data& data) {
+
+	this->state = data.get_position().vstack(data.get_direction())/*.vstack(data.get_acceleration())*/;
+
+
+	this->process_noise_covariance = Matrix<double, n, n>({
+		std::array<double, n>({pow(GPS_NOISE, 2), 0, 0, 0, 0, 0}),
+		std::array<double, n>({0, pow(GPS_NOISE, 2), 0, 0, 0, 0}),
+		std::array<double, n>({0, 0, pow(GPS_NOISE, 2), 0, 0, 0}),
+		std::array<double, n>({0, 0, 0, (pow(GYROSCOPE_NOISE, 2) + pow(ACCELEROMETER_NOISE, 2) * DT), 0, 0}),
+		std::array<double, n>({0, 0, 0, 0, (pow(GYROSCOPE_NOISE, 2) + pow(ACCELEROMETER_NOISE, 2) * DT), 0}),
+		std::array<double, n>({0, 0, 0, 0, 0, (pow(GYROSCOPE_NOISE, 2) + pow(ACCELEROMETER_NOISE, 2) * DT)})
+	});
+
+
 }
 
 
