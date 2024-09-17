@@ -120,6 +120,8 @@ int main() {
 	std::cerr << '\n' << data << '\n';
 	std::cerr << "Lets start the messaging loop!\n";
 	int i = 0;
+	auto state_transition_matrix = filter.get_state_transition_matrix(1.0);
+	std::cerr << state_transition_matrix << "\n";
 	while (true) {
 		Message msg = get_message(socket_fd, &serverAddr);
 		std::cerr << "[" << i << "] " << msg << "\n";
@@ -130,7 +132,6 @@ int main() {
 		if (i > 10)
 			break;
 	}
-
 
 	return EXIT_SUCCESS;
 }
