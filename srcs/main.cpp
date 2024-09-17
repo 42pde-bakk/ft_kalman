@@ -123,6 +123,9 @@ int main() {
 	auto state_transition_matrix = filter.get_state_transition_matrix(1.0);
 	std::cerr << state_transition_matrix << "\n";
 	while (true) {
+		const auto mat = filter.predict(1.0, initial_data.get_acceleration());
+		connection.send_data(mat);
+
 		auto messages = connection.get_messages();
 
 		for (size_t i = 0; i < messages.size(); i++)
@@ -130,15 +133,14 @@ int main() {
 			std::cerr << "[" << i << "] " << messages[i] << "\n";
 		}
 
-		const auto mat = filter.predict(1.0, initial_data.get_acceleration());
-		connection.send_data(mat);
-
 		std::cout << "SEND" << std::endl;
 
 		i += 1;
 		if (i > 10)
 			break;
 	}
+
+	std::cout << "DONE!" << std::endl;
 
 	return EXIT_SUCCESS;
 }
