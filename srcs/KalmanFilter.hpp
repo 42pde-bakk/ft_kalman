@@ -8,8 +8,8 @@
 #include "Matrix.hpp"
 #include "Data.hpp"
 
-#define n 10 // n is the amount of state variables
-// n: 3 positions, 3 directions, 3 accelerations, 1 speed
+#define n 9 // n is the amount of state variables
+// n: 3 positions, 3 directions, 3 accelerations
 // n: [x, y, z, dir, v, acc_x, acc_y, acc_z] (no direction because they won't ever change)
 #define p 3 // p is the amount of inputs
 // p: []
@@ -40,6 +40,7 @@ public:
 
 	[[nodiscard]] const Vector<double, n>& get_state() const;
 
+	Matrix<double, n, n> get_state_transition_matrix(double time_step);
 };
 
 

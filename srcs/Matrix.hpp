@@ -125,6 +125,15 @@ public:
 		return (out);
 	}
 
+	template<size_t SIZE>
+	static Matrix<double, SIZE, SIZE>	identity() {
+		Matrix<double, SIZE, SIZE> out;
+		for (size_t i = 0; i < SIZE; i++) {
+			out[i][i] = 1;
+		}
+		return (out);
+	}
+
 };
 
 template<typename T, size_t ROW_AMOUNT_VEC>
