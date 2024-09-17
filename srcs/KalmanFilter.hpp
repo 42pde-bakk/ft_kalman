@@ -36,7 +36,7 @@ class KalmanFilter {
 public:
 	explicit KalmanFilter(const Data& data);
 
-	Vector3d predict(double time_step, const Vector3d& acceleration);
+	Vector3d predict(size_t time_step, const Vector3d& acceleration);
 
 	[[nodiscard]] const Vector<double, n>& get_state() const;
 

@@ -6,6 +6,7 @@
 #include "Data.hpp"
 #include "KalmanFilter.hpp"
 #include <fstream>
+
 #define DEFAULT_PORT 4242
 
 std::ofstream of("messages.txt", std::ios::trunc);
@@ -120,11 +121,18 @@ int main() {
 	std::cerr << '\n' << data << '\n';
 	std::cerr << "Lets start the messaging loop!\n";
 	int i = 0;
+
+	auto last_timestamp_at = Timestamp();
+
 	while (true) {
 		Message msg = get_message(socket_fd, &serverAddr);
 		std::cerr << "[" << i << "] " << msg << "\n";
 //		send_data(socket_fd, &serverAddr, data.get_position());
-		const auto mat = filter.predict(1.0, data.get_acceleration());
+
+		auto msg_timestamp = msg.get_timestamp();
+		auto delta = (msg_timestamp - last_timestamp_at).to_ms();
+
+		const auto mat = filter.predict(delta, data.get_acceleration());
 		send_data(socket_fd, &serverAddr, mat);
 		i += 1;
 		if (i > 10)

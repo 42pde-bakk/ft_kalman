@@ -31,7 +31,7 @@ const Vector<double, n>& KalmanFilter::get_state() const {
 	return (this->state);
 }
 
-Vector3d KalmanFilter::predict(double time_step, const Vector3d& acceleration) {
+Vector3d KalmanFilter::predict(size_t time_step, const Vector3d& acceleration) {
 	Vector3d predicted_pos;
 	for (int i = 0; i < 3; i++) {
 		this->state[i][0] +=  0.5 * time_step * acceleration[i][0] * acceleration[i][0];
