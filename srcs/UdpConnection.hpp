@@ -77,7 +77,7 @@ private:
 
 			int epoll_res = epoll_wait(this->epoll_fd, this->events, MAX_EPOLL_EVENTS, 2000);
 			if (epoll_res == -1) {
-				perror("Epoll failure");
+				perror("epoll");
 			}
 
 			if (epoll_res == 0) {
@@ -120,7 +120,7 @@ public:
 
 			int epoll_res = epoll_wait(this->epoll_fd, this->events, MAX_EPOLL_EVENTS, 1000);
 			if (epoll_res == -1) {
-				perror("Epoll failure");
+				perror("epoll");
 			}
 
 			if (epoll_res == 0 && idx == 0) {
