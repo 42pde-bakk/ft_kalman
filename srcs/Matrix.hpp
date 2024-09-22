@@ -124,7 +124,6 @@ public:
 		return (out);
 	}
 
-
 	friend std::ostream&	operator<<(std::ostream& o, const Matrix& m) {
 		for (size_t row_nb = 0; row_nb < ROW_AMOUNT; row_nb++) {
 			o << "[";

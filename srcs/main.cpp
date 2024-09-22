@@ -7,6 +7,7 @@
 #include "Data.hpp"
 #include "KalmanFilter.hpp"
 #include <fstream>
+
 #define DEFAULT_PORT 4242
 
 std::ofstream of("messages.txt", std::ios::trunc);
@@ -119,13 +120,24 @@ int main() {
 	of << '\n' << initial_data << '\n';
 	std::cerr << '\n' << initial_data << '\n';
 	std::cerr << "Lets start the messaging loop!\n";
+
+	int i = 0;
+
+	auto last_timestamp_at = Timestamp();
+
+
 	auto state_transition_matrix = filter.get_state_transition_matrix(1.0);
 	std::cerr << state_transition_matrix << "\n";
 
+  auto delta = 0;
+  
 	while (true) {
-		const auto mat = filter.predict(1.0, initial_data.get_acceleration());
+		const auto mat = filter.predict(delta, initial_data.get_acceleration());
 		connection.send_data(mat);
 
+    auto msg_timestamp = msg.get_timestamp();
+		delta = (msg_timestamp - last_timestamp_at).to_ms();
+    
 		auto messages = connection.get_messages();
 
 		for (size_t i = 0; i < messages.size(); i++)

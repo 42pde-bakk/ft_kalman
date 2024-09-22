@@ -62,6 +62,10 @@ MessageType Message::get_message_type() const {
 	return (this->_messageType);
 }
 
+Timestamp Message::get_timestamp() const {
+	return (this->_timestamp);
+}
+
 const std::vector<double>& Message::get_data() const {
 	return (this->data);
 }
