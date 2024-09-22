@@ -1,3 +1,4 @@
+#include "UdpConnection.hpp"
 #include <iostream>
 #include <arpa/inet.h>
 #include <cstring>
@@ -57,11 +58,12 @@ Message get_message(const int socket_fd, struct sockaddr_in* serverAddr) {
 }
 
 
-Data read_initial_data(const int socket_fd, struct sockaddr_in* serverAddr) {
+Data read_initial_data(std::vector<Message> messages) {
 	Data data{};
 
 	for (size_t i = 0; i < 8; i++) {
-		Message msg = get_message(socket_fd, serverAddr);
+		auto msg = messages[i];
+
 		switch (msg.get_message_type()) {
 			case MessageType::TRUE_POSITION:
 				data.set_position(msg.get_data());
@@ -106,20 +108,19 @@ void send_data(const int socket_fd, struct sockaddr_in* serverAddr, const Matrix
 }
 
 int main() {
-	struct sockaddr_in serverAddr{};
-	const int socket_fd = get_socket_fd();
+	auto connection = UdpConnection(4242);
 
-	init_serveraddr(&serverAddr);
-	perform_handshake(socket_fd, &serverAddr);
+	connection.start();
 
-	Data data = read_initial_data(socket_fd, &serverAddr);
-	send_data(socket_fd, &serverAddr, data.get_position());
-	KalmanFilter	filter(data);
+	auto initial_data = read_initial_data(connection.get_messages());
+
+	KalmanFilter	filter(initial_data);
 
 	of << " DONE PARSING INITIAL DATA\n";
-	of << '\n' << data << '\n';
-	std::cerr << '\n' << data << '\n';
+	of << '\n' << initial_data << '\n';
+	std::cerr << '\n' << initial_data << '\n';
 	std::cerr << "Lets start the messaging loop!\n";
+
 	int i = 0;
 
 	auto last_timestamp_at = Timestamp();
@@ -128,20 +129,26 @@ int main() {
 	auto state_transition_matrix = filter.get_state_transition_matrix(1.0);
 	std::cerr << state_transition_matrix << "\n";
 
+  auto delta = 0;
+  
 	while (true) {
-		Message msg = get_message(socket_fd, &serverAddr);
-		std::cerr << "[" << i << "] " << msg << "\n";
-//		send_data(socket_fd, &serverAddr, data.get_position());
+		const auto mat = filter.predict(delta, initial_data.get_acceleration());
+		connection.send_data(mat);
 
-		auto msg_timestamp = msg.get_timestamp();
-		auto delta = (msg_timestamp - last_timestamp_at).to_ms();
+    auto msg_timestamp = msg.get_timestamp();
+		delta = (msg_timestamp - last_timestamp_at).to_ms();
+    
+		auto messages = connection.get_messages();
 
-		const auto mat = filter.predict(delta, data.get_acceleration());
-		send_data(socket_fd, &serverAddr, mat);
-		i += 1;
-		if (i > 10)
-			break;
+		for (size_t i = 0; i < messages.size(); i++)
+		{
+			std::cerr << "[" << i << "] " << messages[i] << "\n";
+		}
+
+		std::cout << "SEND" << std::endl;
 	}
+
+	std::cout << "DONE!" << std::endl;
 
 	return EXIT_SUCCESS;
 }

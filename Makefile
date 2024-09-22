@@ -2,15 +2,26 @@ NAME = ft_kalman
 
 INC_DIR = ./srcs
 SRC_DIR = ./srcs
-OBJ_DIR = ./obj
+OBJ_DIR = obj
 SRC_EXT = cpp
 OBJ_EXT = o
 INC_EXT = hpp
 #SRCS = $(wildcard $(SRC_DIR)/*.c)
-SRCS = $(shell find $(SRC_DIR) -type f -name "*.$(SRC_EXT)")
+SRCS := $(wildcard $(SRC_DIR)/*/*.cpp)
+SRCS += $(wildcard $(SRC_DIR)/*.cpp)
+
 HEADERS = $(shell find $(INC_DIR) -type f -name "*.$(INC_EXT)")
-OBJECTSS = $(SRCS:.cpp=.o)
-OBJS = $(patsubst $(SRC_DIR)/%,$(OBJ_DIR)/%,$(OBJECTSS))
+
+OBJECTS := $(patsubst %.cpp, %.o, $(SRCS))
+OBJECTS := $(notdir $(OBJECTS))
+OBJECTS := $(addprefix $(OBJ_DIR)/, $(OBJECTS))
+
+DEP	:= $(patsubst %.cpp, %.d, $(SRCS))
+DEP := $(notdir $(DEP))
+DEP := $(addprefix $(OBJ_DIR)/, $(DEP))
+
+VPATH = $(SRC_DIR):$(wildcard $(SRC_DIR)/*/)
+
 
 # COLORS
 PINK = \x1b[35;01m
@@ -21,7 +32,7 @@ RED = \x1b[31;01m
 WHITE = \x1b[31;37m
 RESET = \x1b[0m
 
-CFLAGS = -Wall -Werror -Wextra
+CFLAGS = -Wall -Werror -Wextra -std=c++20
 ifdef DEBUG
  CFLAGS += -g3 -fsanitize=address
 endif
@@ -35,26 +46,31 @@ ifdef SPEED
  CFLAGS += -Ofast
 endif
 
-all: $(NAME)
+all:
+	$(MAKE) -j $(NAME)
 
-$(NAME): $(OBJS) $(HEADERS)
-	$(CXX) $(CFLAGS) $(INCLUDE) $(OBJS) -o $@
+$(NAME): $(OBJECTS)
+	$(CXX) $(LIBS) $(LINKFLAGS) $(CFLAGS) $(OBJECTS) -o $(NAME)
 	@printf "$(PINK)Done building $(NAME) $(RESET)\n"
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@mkdir -p "$(@D)"
-	$(CXX) -c $(CFLAGS) $(INCLUDE) $< -o $@
+$(OBJ_DIR)/%.o : %.cpp
+	$(CXX) $(LIBS) $(CFLAGS) -c $< -o $@
+
+$(OBJECTS): | $(OBJ_DIR)
+
+$(OBJ_DIR):
+	mkdir $(OBJ_DIR)
+
+$(OBJ_DIR)/%.d: %.cpp
+	$(CXX) $< -MM -MF $@ -MT $(OBJ_DIR)/$*.o $(CFLAGS) $(LIBS)
 
 clean:
-	/bin/rm -f $(OBJS)
-	@/bin/rm -f *.o *~ *.gch
+	$(RM) $(OBJECTS)
 
 fclean: clean
-	/bin/rm -f $(NAME)
+	$(RM) $(NAME) $(NAME_EXEC)
 
-re:
-	$(MAKE) fclean
-	$(MAKE) all
+re: fclean all
 
 bonus: BONUS=1
 bonus:
@@ -72,3 +88,4 @@ test: all
 	@echo "Stopping task with PID: $$PID"
 	kill $$PID && rm -f $(PID_FILE)
 
+-include $(DEP)
