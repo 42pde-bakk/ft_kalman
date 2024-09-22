@@ -122,11 +122,13 @@ int main() {
 	std::cerr << "Lets start the messaging loop!\n";
 
 	auto last_timestamp_at = Timestamp();
+	auto start_timestamp = std::chrono::system_clock::now();
 
 	auto state_transition_matrix = filter.get_state_transition_matrix(1.0);
 	std::cerr << state_transition_matrix << "\n";
 
 	auto delta = 0;
+	size_t iterations = 0;
   
 	while (true) {
 		const auto mat = filter.predict(delta, initial_data.get_acceleration());
@@ -134,6 +136,10 @@ int main() {
 
     
 		auto messages = connection.get_messages();
+		if (messages.size() == 0) {
+			break;
+		}
+
 		auto msg_timestamp = messages[0].get_timestamp();
 
 		delta = (msg_timestamp - last_timestamp_at).to_ms();
@@ -144,7 +150,13 @@ int main() {
 		}
 
 		std::cout << "SEND" << std::endl;
+		iterations++;
 	}
+
+	auto end_timestamp = std::chrono::system_clock::now();
+
+	std::cout << "Survived for " << 
+		(end_timestamp - start_timestamp).count() / 1'000'000'000u - 1 << " seconds, iterations: " << iterations << std::endl;
 
 	std::cout << "DONE!" << std::endl;
 

@@ -124,8 +124,8 @@ public:
 			}
 
 			if (epoll_res == 0 && idx == 0) {
-				std::cout << "error: ft_kalman: timeout socket_fd" << std::endl;
-				exit(EXIT_FAILURE);
+				std::cerr << "error: ft_kalman: timeout socket_fd" << std::endl;
+				return std::vector<Message>();
 			}
 
 			if (epoll_res == 0) {
