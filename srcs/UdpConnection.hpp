@@ -116,7 +116,7 @@ public:
 			auto buffer = std::string();
 			buffer.resize(1024);
 
-			std::cout << "START READING" << std::endl;
+			// std::cout << "START READING" << std::endl;
 
 			int epoll_res = epoll_wait(this->epoll_fd, this->events, MAX_EPOLL_EVENTS, 1000);
 			if (epoll_res == -1) {
@@ -149,7 +149,7 @@ public:
 				exit(EXIT_SUCCESS);
 			}
 
-			std::cout << "buff: " << buffer << std::endl;
+			// std::cout << "buff: " << buffer << std::endl;
 
 			if (buffer.starts_with("Trajectory") || buffer.starts_with("Sending")) {
 				continue;

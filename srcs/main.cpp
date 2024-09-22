@@ -146,11 +146,11 @@ int main() {
 
 		for (size_t i = 0; i < messages.size(); i++)
 		{
-			std::cerr << "[" << i << "] " << messages[i] << "\n";
+			// std::cerr << "[" << i << "] " << messages[i] << "\n";
 		}
 
-		std::cout << "SEND" << std::endl;
 		iterations++;
+		last_timestamp_at = msg_timestamp;
 	}
 
 	auto end_timestamp = std::chrono::system_clock::now();

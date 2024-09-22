@@ -24,6 +24,9 @@ public:
 	Timestamp() = default;
 	Timestamp(const Timestamp& rhs) = default;
 	~Timestamp() = default;
+
+	Timestamp& operator=(const Timestamp &rhs);
+
 	void set(const std::string& s);
 
 	size_t to_ms();
@@ -33,7 +36,7 @@ public:
 	}
 
 	friend std::ostream& operator<<(std::ostream& o, const Timestamp& t);
-	friend Timestamp& operator-(Timestamp& lhs, const Timestamp& rhs);
+	friend Timestamp operator-(Timestamp& lhs, const Timestamp& rhs);
 };
 
 
