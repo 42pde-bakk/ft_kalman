@@ -119,9 +119,9 @@ int main() {
 	of << '\n' << initial_data << '\n';
 	std::cerr << '\n' << initial_data << '\n';
 	std::cerr << "Lets start the messaging loop!\n";
-	int i = 0;
 	auto state_transition_matrix = filter.get_state_transition_matrix(1.0);
 	std::cerr << state_transition_matrix << "\n";
+
 	while (true) {
 		const auto mat = filter.predict(1.0, initial_data.get_acceleration());
 		connection.send_data(mat);
@@ -134,10 +134,6 @@ int main() {
 		}
 
 		std::cout << "SEND" << std::endl;
-
-		i += 1;
-		if (i > 10)
-			break;
 	}
 
 	std::cout << "DONE!" << std::endl;
