@@ -65,7 +65,7 @@ $(OBJ_DIR)/%.d: %.cpp
 	$(CXX) $< -MM -MF $@ -MT $(OBJ_DIR)/$*.o $(CFLAGS) $(LIBS)
 
 clean:
-	$(RM) $(OBJECTS)
+	$(RM) $(OBJECTS) $(DEP)
 
 fclean: clean
 	$(RM) $(NAME) $(NAME_EXEC)
