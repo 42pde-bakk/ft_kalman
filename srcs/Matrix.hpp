@@ -105,13 +105,14 @@ public:
 
 	template<size_t R>
 	[[nodiscard]] Matrix<double, ROW_AMOUNT + R, COLUMN_AMOUNT>	vstack(const Matrix<T, R, COLUMN_AMOUNT>& rhs) const {
-		Matrix<double, ROW_AMOUNT + R, COLUMN_AMOUNT> out;
+		auto out = Matrix<double, ROW_AMOUNT + R, COLUMN_AMOUNT>();
 		for (size_t r = 0; r < R; r++) {
 			out.data[r] = this->data[r];
 		}
 		for (size_t r = 0; r < R; r++) {
 			out.data[R + r] = rhs.data[r];
 		}
+
 		return (out);
 	}
 
