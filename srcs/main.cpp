@@ -132,6 +132,9 @@ int main() {
   
 	while (true) {
 		const auto mat = filter.predict(delta, initial_data.get_acceleration());
+
+		std::cout << mat << std::endl;
+
 		connection.send_data(mat);
 
     

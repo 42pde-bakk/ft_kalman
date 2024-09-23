@@ -3,9 +3,10 @@
 //
 
 #include "KalmanFilter.hpp"
+#include <iostream>
 
 KalmanFilter::KalmanFilter(const Data& data) {
-	this->state = data.get_position().vstack(data.get_direction()).vstack(data.get_acceleration());
+	this->state = data.get_position().vstack(data.calculate_velocity()).vstack(data.get_acceleration());
 
 	this->process_noise_covariance_matrix = Matrix<double, n, n>({
 		std::array<double, n>({pow(GPS_NOISE, 2), 0, 0, 0, 0, 0}),
@@ -33,10 +34,38 @@ const Vector<double, n>& KalmanFilter::get_state() const {
 
 Vector3d KalmanFilter::predict(size_t time_step, const Vector3d& acceleration) {
 	Vector3d predicted_pos;
-	for (int i = 0; i < 3; i++) {
-		this->state[i][0] +=  0.5 * time_step * acceleration[i][0] * acceleration[i][0];
-		predicted_pos[i][0] = this->state[i][0];
-	}
+	// for (int i = 0; i < 3; i++) {
+	// 	this->state[i][0] +=  0.5 * time_step * acceleration[i][0] * acceleration[i][0];
+	// 	predicted_pos[i][0] = this->state[i][0];
+	// }
+
+	(void)acceleration;
+
+	auto time = (double)time_step / 1000;
+
+	// acceleration squared.
+	auto acsq = 0.5 * time * time;
+
+	auto F_vec = Matrix<double, 9, 9>({
+		std::array<double, 9>({ 1  , 0  , 0   , time, 0   , 0   , acsq, 0   , 0}),
+		std::array<double, 9>({ 0  , 1  , 0   , 0   , time, 0   , 0   , acsq, 0}),
+		std::array<double, 9>({ 0  , 0  , 1   , 0   , 0   , time, 0   , 0   , acsq}),
+		std::array<double, 9>({ 0  , 0  , 0   , 1	, 0   , 0   , time, 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 1   , 0   , 0   , time, 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 1   , 0   , 0   , time}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 1   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
+	});
+
+	this->state = F_vec * this->state;
+
+	predicted_pos[0][0] = this->state[0][0];
+	predicted_pos[1][0] = this->state[1][0];
+	predicted_pos[2][0] = this->state[2][0];
+
+	std::cout << this->state << std::endl;
+
 //	auto predicted_mu = A * mu_t + B * u_t;
 //	auto predicted_sigma = A * sigma_t * A.transpose() + Q;
 	return predicted_pos;

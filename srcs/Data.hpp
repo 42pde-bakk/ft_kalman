@@ -27,6 +27,8 @@ public:
 
 	void set_direction(const std::vector<double>& vec);
 
+	void get_velocity(const std::vector<double>& vec);
+
 	void set_acceleration(const std::vector<double>& vec);
 
 	void set_speed(double sp);
