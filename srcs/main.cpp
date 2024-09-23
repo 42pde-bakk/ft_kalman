@@ -124,8 +124,8 @@ int main() {
 	auto last_timestamp_at = Timestamp();
 	auto start_timestamp = std::chrono::system_clock::now();
 
-	auto state_transition_matrix = filter.get_state_transition_matrix(1.0);
-	std::cerr << state_transition_matrix << "\n";
+	// auto state_transition_matrix = filter.get_state_transition_matrix(1.0);
+	// std::cerr << state_transition_matrix << "\n";
 
 	auto delta = 0;
 	size_t iterations = 0;
@@ -149,11 +149,12 @@ int main() {
 
 		for (size_t i = 0; i < messages.size(); i++)
 		{
-			// std::cerr << "[" << i << "] " << messages[i] << "\n";
+			std::cout << "[" << i << "] " << messages[i] << "\n";
 		}
 
 		iterations++;
 		last_timestamp_at = msg_timestamp;
+
 	}
 
 	auto end_timestamp = std::chrono::system_clock::now();
