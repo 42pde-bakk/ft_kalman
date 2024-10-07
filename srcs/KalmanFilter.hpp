@@ -33,9 +33,9 @@ class KalmanFilter {
 	Matrix<double, n, m> kalman_gain_matrix;
 
 	Matrix<double, n, n> P_mat = Matrix<double, 9, 9>({
-		std::array<double, 9>({ 1  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
-		std::array<double, 9>({ 0  , 1  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, 9>({ 0  , 0  , 1   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, 9>({ 0  , 0  , 0   , GYROSCOPE_NOISE	, 0   , 0   , 0   , 0   , 0}),
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0   , 0}),
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0}),
@@ -98,7 +98,7 @@ class KalmanFilter {
 public:
 	explicit KalmanFilter(const Data& data);
 
-	Vector3d predict(size_t time_step, const Matrix<double, 6, 1>& inputs);
+	Vector3d predict(size_t time_step, const Matrix<double, n, 1>& inputs);
 
 	[[nodiscard]] const Vector<double, n>& get_state() const;
 
@@ -106,7 +106,7 @@ public:
 
 	Matrix<double, n, n> get_state_transition_matrix(double time_step);
 
-	Matrix<double, n, 1> calculate_measurement_vector(const Matrix<double, 6, 1> &inputs);
+	Matrix<double, n, 1> calculate_measurement_vector(const Matrix<double, n, 1> &inputs);
 
 	Matrix<double, n, n> calculate_kalman_gain();
 

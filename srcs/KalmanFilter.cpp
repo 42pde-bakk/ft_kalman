@@ -6,7 +6,7 @@
 #include <iostream>
 
 KalmanFilter::KalmanFilter(const Data& data) {
-	this->state = data.get_position().vstack(data.get_acceleration()).vstack(data.calculate_velocity());
+	this->state = data.get_position().vstack(data.calculate_velocity()).vstack(data.get_acceleration());
 
 	this->process_noise_covariance_matrix = Matrix<double, n, n>({
 		std::array<double, n>({pow(GPS_NOISE, 2), 0, 0, 0, 0, 0}),
@@ -39,7 +39,7 @@ Matrix<double, n, n> KalmanFilter::extrapolate_covariance(Matrix<double, n, n> F
 	return P_n1_mat;
 }
 
-Matrix<double, n, 1> KalmanFilter::calculate_measurement_vector(const Matrix<double, 6, 1> &inputs) {
+Matrix<double, n, 1> KalmanFilter::calculate_measurement_vector(const Matrix<double, n, 1> &inputs) {
 	// z_n = Hx_n + v_n
 
 	auto z_n = this->H_mat * inputs;
@@ -49,8 +49,22 @@ Matrix<double, n, 1> KalmanFilter::calculate_measurement_vector(const Matrix<dou
 
 Matrix<double, n, n> KalmanFilter::calculate_kalman_gain() {
 	// Kn = Pn,n-1HT(HPn,n-1HT + Rn)^-1
-
 	auto k_n = this->P_mat * this->H_mat.transpose() * (this->H_mat * this->P_mat * this->H_mat.transpose() + this->R_mat).pow(-1);
+
+	// auto k_n = this->P_mat * this->H_mat.transpose();
+
+	// std::cout << "S1\n" << k_n << std::endl;
+
+	// auto im = (this->H_mat * this->P_mat * this->H_mat.transpose() + this->R_mat);
+
+	// std::cout << "SIM\n" << im << std::endl;
+
+	// k_n = k_n * im.pow(-1);
+
+	// std::cout << "S2\n" << k_n << std::endl;
+
+	// exit(1);
+
 
 	return k_n;
 }
@@ -75,10 +89,13 @@ Matrix<double, n, n> KalmanFilter::update_covariance_matrix(Matrix<double, n, n>
 	return p_n_n;
 }
 
-Vector3d KalmanFilter::predict(size_t time_step, const Matrix<double, 6, 1>& inputs) {
+Vector3d KalmanFilter::predict(size_t time_step, const Matrix<double, n, 1>& inputs) {
 	Vector3d predicted_pos;
 
 	(void)time_step;
+	(void)inputs;
+
+	std::cout << "IN" << this->state << std::endl;
 
 	auto time = (double)time_step / 1000;
 
@@ -98,15 +115,30 @@ Vector3d KalmanFilter::predict(size_t time_step, const Matrix<double, 6, 1>& inp
 	});
 
 	this->state = F_mat * this->state;
+
+	std::cout << "STATE\n" << this->state << std::endl;
+
 	this->P_mat = this->extrapolate_covariance(F_mat, this->P_mat);
 
-	auto measurement = this->calculate_measurement_vector(inputs);
+	std::cout << "P_MAT\n" << this->P_mat << std::endl;
+
+	auto measurement = this->calculate_measurement_vector(this->state);
+
+	std::cout << "MEASUREMENT\n" << measurement << std::endl;
+
 	auto kalman = this->calculate_kalman_gain();
+
+	std::cout << "GAIN\n" << kalman << std::endl;
+
 	auto updated_state = this->update_state_matrix(kalman, this->state, measurement);
+
+	std::cout << "UPDATED\n" << updated_state << std::endl;
 
 	this->state = updated_state;
 
 	auto updated_covariance = this->update_covariance_matrix(kalman);
+
+	std::cout << "COV\n" << updated_covariance << std::endl;
 
 	this->P_mat = updated_covariance;
 

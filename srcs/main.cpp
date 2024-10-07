@@ -83,7 +83,10 @@ int run(Arguments &args) {
 	while (true) {
 		auto velocity = initial_data.calculate_velocity();
 
-		auto input = Matrix<double, 6, 1>(std::array<double, 6>({
+		auto input = Matrix<double, n, 1>(std::array<double, n>({
+			0,
+			0,
+			0,
 			initial_data.get_acceleration(0, 0),
 			initial_data.get_acceleration(0, 1),
 			initial_data.get_acceleration(0, 2),
