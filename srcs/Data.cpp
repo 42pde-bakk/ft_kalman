@@ -45,7 +45,6 @@ double Data::get_acceleration(size_t row_nb, size_t col_nb) const {
 	return (this->acceleration[row_nb][col_nb]);
 }
 
-#include <iostream>
 Vector3d Data::calculate_velocity() const {
 	auto speed_m_s = this->speed / 3.6;
 	// double roll = this->direction[0][0];

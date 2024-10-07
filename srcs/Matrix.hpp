@@ -136,8 +136,41 @@ public:
 		return (o);
 	}
 
-};
+	template<size_t COL>
+	Matrix operator+(const Matrix<T, ROW_AMOUNT, COL> &rhs) const {
+		Matrix out(*this);
 
+		for (size_t row = 0; row < ROW_AMOUNT; row++) {
+			for (size_t column = 0; column < COLUMN_AMOUNT; column++) {
+				out[row][column] += rhs[row][column];
+			}
+		}
+		return (out);
+	}
+
+	template<size_t COL>
+	Matrix operator-(const Matrix<T, ROW_AMOUNT, COL> &rhs) const {
+		Matrix out(*this);
+
+		for (size_t row = 0; row < ROW_AMOUNT; row++) {
+			for (size_t column = 0; column < COLUMN_AMOUNT; column++) {
+				out[row][column] -= rhs[row][column];
+			}
+		}
+		return (out);
+	}
+
+	Matrix pow(long double n) const {
+		Matrix out(*this);
+
+		for (size_t row = 0; row < ROW_AMOUNT; row++) {
+			for (size_t column = 0; column < COLUMN_AMOUNT; column++) {
+				out[row][column] = std::pow(out[row][column], n);
+			}
+		}
+		return (out);
+	}
+};
 
 template<typename T, size_t ROW_AMOUNT_VEC>
 using Vector = Matrix<T, ROW_AMOUNT_VEC, 1>;

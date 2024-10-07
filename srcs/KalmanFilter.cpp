@@ -32,10 +32,52 @@ const Vector<double, n>& KalmanFilter::get_state() const {
 	return (this->state);
 }
 
-Vector3d KalmanFilter::predict(size_t time_step, const Vector3d& acceleration) {
+Matrix<double, n, n> KalmanFilter::extrapolate_covariance(Matrix<double, n, n> F_mat, Matrix<double, n, n> P_mat) {
+	// Pn+1,n=FPn,nFT
+	auto P_n1_mat = F_mat * P_mat * F_mat.transpose() + this->Q_mat;
+
+	return P_n1_mat;
+}
+
+Matrix<double, n, 1> KalmanFilter::calculate_measurement_vector(const Matrix<double, 6, 1> &inputs) {
+	// z_n = Hx_n + v_n
+
+	auto z_n = this->H_mat * inputs;
+
+	return z_n;
+}
+
+Matrix<double, n, n> KalmanFilter::calculate_kalman_gain() {
+	// Kn = Pn,n-1HT(HPn,n-1HT + Rn)^-1
+
+	auto k_n = this->P_mat * this->H_mat.transpose() * (this->H_mat * this->P_mat * this->H_mat.transpose() + this->R_mat).pow(-1);
+
+	return k_n;
+}
+
+Matrix<double, n, 1> KalmanFilter::update_state_matrix(Matrix<double, n, n> &kalman, Matrix<double, n, 1> x_prev, Matrix<double, n, 1> z_n) {
+	// x_n,n = x_n,n-1 + Kn(Zn - Hx_n,n-1)
+
+	auto x_n_n = x_prev + kalman * (z_n - this->H_mat * x_prev);
+
+	return x_n_n;
+}
+
+Matrix<double, n, n> KalmanFilter::update_covariance_matrix(Matrix<double, n, n> &kalman) {
+	// P_n,n = (I - KnH)P_n,n-1(I - KnH)T + KnRnKnT
+
+	auto p_n_n = 
+		(this->identity - kalman * this->H_mat) * 
+		this->P_mat * 
+		(this->identity - kalman * this->H_mat).transpose() +
+		kalman * this->R_mat * kalman.transpose();
+
+	return p_n_n;
+}
+
+Vector3d KalmanFilter::predict(size_t time_step, const Matrix<double, 6, 1>& inputs) {
 	Vector3d predicted_pos;
 
-	(void)acceleration;
 	(void)time_step;
 
 	auto time = (double)time_step / 1000;
@@ -43,7 +85,7 @@ Vector3d KalmanFilter::predict(size_t time_step, const Vector3d& acceleration) {
 	// acceleration squared.
 	auto acsq = 0.5 * time * time;
 
-	auto F_vec = Matrix<double, 9, 9>({
+	auto F_mat = Matrix<double, 9, 9>({
 		std::array<double, 9>({ 1  , 0  , 0   , time, 0   , 0   , acsq, 0   , 0}),
 		std::array<double, 9>({ 0  , 1  , 0   , 0   , time, 0   , 0   , acsq, 0}),
 		std::array<double, 9>({ 0  , 0  , 1   , 0   , 0   , time, 0   , 0   , acsq}),
@@ -55,7 +97,18 @@ Vector3d KalmanFilter::predict(size_t time_step, const Vector3d& acceleration) {
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
 	});
 
-	this->state = F_vec * this->state;
+	this->state = F_mat * this->state;
+	this->P_mat = this->extrapolate_covariance(F_mat, this->P_mat);
+
+	auto measurement = this->calculate_measurement_vector(inputs);
+	auto kalman = this->calculate_kalman_gain();
+	auto updated_state = this->update_state_matrix(kalman, this->state, measurement);
+
+	this->state = updated_state;
+
+	auto updated_covariance = this->update_covariance_matrix(kalman);
+
+	this->P_mat = updated_covariance;
 
 	predicted_pos[0][0] = this->state[0][0];
 	predicted_pos[1][0] = this->state[1][0];

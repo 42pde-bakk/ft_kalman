@@ -77,14 +77,22 @@ int run(Arguments &args) {
 	auto last_timestamp_at = Timestamp();
 	auto start_timestamp = std::chrono::system_clock::now();
 
-	// auto state_transition_matrix = filter.get_state_transition_matrix(1.0);
-	// std::cerr << state_transition_matrix << "\n";
-
 	auto delta = 0;
 	size_t iterations = 0;
   
 	while (true) {
-		const auto mat = filter.predict(delta, initial_data.get_acceleration());
+		auto velocity = initial_data.calculate_velocity();
+
+		auto input = Matrix<double, 6, 1>(std::array<double, 6>({
+			initial_data.get_acceleration(0, 0),
+			initial_data.get_acceleration(0, 1),
+			initial_data.get_acceleration(0, 2),
+			velocity[0][0],
+			velocity[0][1],
+			velocity[0][2],
+		}));
+
+		const auto mat = filter.predict(delta, input);
 
 		std::cout << mat << std::endl;
 
