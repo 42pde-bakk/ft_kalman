@@ -24,6 +24,21 @@
 
 template<size_t Nx, size_t Nz, size_t Nu>
 class KalmanFilter {
+public:
+	using StateVector = Matrix<double, Nx, 1>;
+	using MeasurementVector = Matrix<double, Nz, 1>;
+	using StateTransitionMatrix = Matrix<double, Nx, Nx>;
+	using InputVector = Matrix<double, Nu, 1>;
+	using ControlMatrix = Matrix<double, Nx, Nu>;
+	using EstimateCovarianceMatrix = Matrix<double, Nx, Nx>;
+	using ProcessNoiseCovariance = Matrix<double, Nx, Nx>;
+	using MeasurementCovariance = Matrix<double, Nz, Nz>;
+	using ProcessNoiseVector = Matrix<double, Nx, 1>;
+	using MeasurementNoiseVector = Matrix<double, Nz, 1>;
+	using ObservationMatrix = Matrix<double, Nz, Nx>;
+	using KalmanGain = Matrix<double, Nx, Nz>;
+
+private:
 	Vector<double, Nx> state{};
 	unsigned int k;
 	// Matrices
@@ -99,13 +114,25 @@ public:
 		this->state = Matrix<double, Nx, 1>();
 	}
 
-	Vector3d predict(size_t time_step, const Matrix<double, Nx, 1>& inputs) {
-		Vector3d predicted_pos;
+	// Vector3d predict(size_t time_step, const InputVector &inputs);
 
-		(void)time_step;
-		(void)inputs;
+	// ///
 
+	// EstimateCovarianceMatrix extrapolate_covariance(const StateTransitionMatrix F_mat, const EstimateCovarianceMatrix P_mat);
+
+	// MeasurementVector calculate_measurement_vector(const InputVector &inputs);
+
+	// KalmanGain calculate_kalman_gain();
+
+	// StateVector update_state_matrix(KalmanGain &kalman, StateVector x_prev, MeasurementVector z_n);
+
+	// EstimateCovarianceMatrix update_covariance_matrix(KalmanGain &kalman);
+
+	///
+
+	Vector3d predict(size_t time_step, const InputVector& inputs) {
 		std::cout << "IN" << this->state << std::endl;
+		Vector3d predicted_pos;
 
 		auto time = (double)time_step / 1000;
 
@@ -113,16 +140,16 @@ public:
 		auto acsq = 0.5 * time * time;
 
 		auto F_mat = Matrix<double, 9, 9>({
-												  std::array<double, 9>({ 1  , 0  , 0   , time, 0   , 0   , acsq, 0   , 0}),
-												  std::array<double, 9>({ 0  , 1  , 0   , 0   , time, 0   , 0   , acsq, 0}),
-												  std::array<double, 9>({ 0  , 0  , 1   , 0   , 0   , time, 0   , 0   , acsq}),
-												  std::array<double, 9>({ 0  , 0  , 0   , 1	, 0   , 0   , time, 0   , 0}),
-												  std::array<double, 9>({ 0  , 0  , 0   , 0   , 1   , 0   , 0   , time, 0}),
-												  std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 1   , 0   , 0   , time}),
-												  std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 1   , 0   , 0}),
-												  std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0}),
-												  std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
-										  });
+			std::array<double, 9>({ 1  , 0  , 0   , time, 0   , 0   , acsq, 0   , 0}),
+			std::array<double, 9>({ 0  , 1  , 0   , 0   , time, 0   , 0   , acsq, 0}),
+			std::array<double, 9>({ 0  , 0  , 1   , 0   , 0   , time, 0   , 0   , acsq}),
+			std::array<double, 9>({ 0  , 0  , 0   , 1	, 0   , 0   , time, 0   , 0}),
+			std::array<double, 9>({ 0  , 0  , 0   , 0   , 1   , 0   , 0   , time, 0}),
+			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 1   , 0   , 0   , time}),
+			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 1   , 0   , 0}),
+			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0}),
+			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
+		});
 
 		this->state = F_mat * this->state;
 
@@ -169,7 +196,7 @@ public:
 		return (this->state);
 	}
 
-	Matrix<double, Nx, Nx> extrapolate_covariance(Matrix<double, Nx, Nx> F_mat, Matrix<double, Nx, Nx> P_mat) {
+	Matrix<double, Nx, Nx> extrapolate_covariance(const StateTransitionMatrix F_mat, const EstimateCovarianceMatrix P_mat) {
 		// Pn+1,n=FPn,nFT
 		auto P_n1_mat = F_mat * P_mat * F_mat.transpose() + this->Q_mat;
 
@@ -187,7 +214,7 @@ public:
 		return (mat);
 	}
 
-	Matrix<double, Nx, 1> calculate_measurement_vector(const Matrix<double, Nx, 1> &inputs) {
+	MeasurementVector calculate_measurement_vector(const InputVector &inputs) {
 		// z_n = Hx_n + v_n
 
 		auto z_n = this->H_mat * inputs;
@@ -195,7 +222,7 @@ public:
 		return z_n;
 	}
 
-	Matrix<double, Nx, Nx> calculate_kalman_gain() {
+	KalmanGain calculate_kalman_gain() {
 		// Kn = Pn,n-1HT(HPn,n-1HT + Rn)^-1
 		auto k_n = this->P_mat * this->H_mat.transpose() * (this->H_mat * this->P_mat * this->H_mat.transpose() + this->R_mat).pow(-1);
 
@@ -217,7 +244,7 @@ public:
 		return k_n;
 	}
 
-	Matrix<double, Nx, 1> update_state_matrix(Matrix<double, Nx, Nx> &kalman, Matrix<double, Nx, 1> x_prev, Matrix<double, Nx, 1> z_n) {
+	StateVector update_state_matrix(KalmanGain &kalman, StateVector x_prev, MeasurementVector z_n) {
 		// x_n,n = x_n,n-1 + Kn(Zn - Hx_n,n-1)
 
 		auto x_n_n = x_prev + kalman * (z_n - this->H_mat * x_prev);
@@ -225,7 +252,7 @@ public:
 		return x_n_n;
 	}
 
-	Matrix<double, Nx, Nx> update_covariance_matrix(Matrix<double, Nx, Nx> &kalman) {
+	EstimateCovarianceMatrix update_covariance_matrix(KalmanGain &kalman) {
 		// P_n,n = (I - KnH)P_n,n-1(I - KnH)T + KnRnKnT
 
 		auto p_n_n =
@@ -248,6 +275,12 @@ public:
 
 		auto x = gps_noise.vstack(acceleration_noise).vstack(gyroscope_noise);
 		return (x);
+	}
+
+	double get_current_speed() {
+		auto speed = std::sqrt(std::pow(this->state[0][3], 2) + std::pow(this->state[0][4], 2) + std::pow(this->state[0][5], 2));
+
+		return speed;
 	}
 };
 

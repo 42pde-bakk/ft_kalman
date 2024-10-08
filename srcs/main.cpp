@@ -78,50 +78,54 @@ int run(Arguments &args) {
 
 		auto data = read_initial_data(messages);
 
-		auto velocity = data.calculate_velocity();
 
 		if (iterations == 0) {
+			auto velocity = data.calculate_velocity();
+
 			auto state = std::array<double, 9>({
 				data.get_position()[0][0],
 				data.get_position()[0][1],
 				data.get_position()[0][2],
-				data.get_acceleration(0, 0),
-				data.get_acceleration(0, 1),
-				data.get_acceleration(0, 2),
 				velocity[0][0],
 				velocity[0][1],
 				velocity[0][2],
+				data.get_acceleration(0, 0),
+				data.get_acceleration(0, 1),
+				data.get_acceleration(0, 2),
 			});
 	
 			filter.set_state(state);
 
+		} else {
+			data.set_speed(filter.get_current_speed());
 		}
 
+		auto velocity = data.calculate_velocity();
 
 		auto state = std::array<double, 9>({
 			0,
 			0,
 			0,
-			data.get_acceleration(0, 0),
-			data.get_acceleration(0, 1),
-			data.get_acceleration(0, 2),
 			velocity[0][0],
 			velocity[0][1],
 			velocity[0][2],
+			data.get_acceleration(0, 0),
+			data.get_acceleration(0, 1),
+			data.get_acceleration(0, 2),
 		});
 
 		auto input = Matrix<double, 9, 1>(state);
+
+
+		auto msg_timestamp = messages[0].get_timestamp();
+
+		delta = (msg_timestamp - last_timestamp_at).to_ms();
 
 		const auto mat = filter.predict(delta, input);
 
 		std::cout << mat << std::endl;
 
 		connection.send_data(mat);
-
-
-		auto msg_timestamp = messages[0].get_timestamp();
-
-		delta = (msg_timestamp - last_timestamp_at).to_ms();
 
 		for (size_t i = 0; i < messages.size(); i++)
 		{

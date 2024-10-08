@@ -32,7 +32,7 @@ RED = \x1b[31;01m
 WHITE = \x1b[31;37m
 RESET = \x1b[0m
 
-CFLAGS = -Wall -Werror -Wextra -std=c++20 -Ofast
+CFLAGS = -Wall -Werror -Wextra -std=c++20
 ifdef DEBUG
  CFLAGS += -g3 -fsanitize=address
 endif

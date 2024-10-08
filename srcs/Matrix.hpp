@@ -65,7 +65,7 @@ public:
 	}
 
 	template<size_t ROW_AMOUNT_2, size_t COLUMN_AMOUNT_2>
-	Matrix<T, ROW_AMOUNT, COLUMN_AMOUNT_2> operator*(const Matrix<T, ROW_AMOUNT_2, COLUMN_AMOUNT_2>& rhs) {
+	Matrix<T, ROW_AMOUNT, COLUMN_AMOUNT_2> operator*(const Matrix<T, ROW_AMOUNT_2, COLUMN_AMOUNT_2>& rhs) const {
 		assert(COLUMN_AMOUNT == ROW_AMOUNT_2);
 		auto out = Matrix<double, ROW_AMOUNT, COLUMN_AMOUNT_2>();
 
