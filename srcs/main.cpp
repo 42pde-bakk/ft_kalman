@@ -28,7 +28,7 @@ Data read_initial_data(std::vector<Message> messages) {
 				data.set_acceleration(msg.get_data());
 				break;
 			case MessageType::SPEED:
-				data.set_speed(msg.get_data().front());
+				data.set_speed(msg.get_data().front() / 3.6); // [OK] convert to m/s
 				break;
 			default:
 				break;
