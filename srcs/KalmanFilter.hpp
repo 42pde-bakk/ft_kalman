@@ -8,6 +8,9 @@
 #include "Matrix.hpp"
 #include "Data.hpp"
 
+#define Nx 9
+#define Nz 9
+#define Nu 9
 #define n 9 // n is the amount of state variables
 // n: 3 positions, 3 directions, 3 accelerations
 // n: [x, y, z, dir, v, acc_x, acc_y, acc_z] (no direction because they won't ever change)
@@ -22,6 +25,21 @@
 #define ACCELEROMETER_NOISE 0.001
 
 class KalmanFilter {
+public:
+	using StateVector = Matrix<double, Nx, 1>;
+	using MeasurementVector = Matrix<double, Nz, 1>;
+	using StateTransitionMatrix = Matrix<double, Nx, Nx>;
+	using InputVector = Matrix<double, Nu, 1>;
+	using ControlMatrix = Matrix<double, Nx, Nu>;
+	using EstimateCovarianceMatrix = Matrix<double, Nx, Nx>;
+	using ProcessNoiseCovariance = Matrix<double, Nx, Nx>;
+	using MeasurementCovariance = Matrix<double, Nz, Nz>;
+	using ProcessNoiseVector = Matrix<double, Nx, 1>;
+	using MeasurementNoiseVector = Matrix<double, Nz, 1>;
+	using ObservationMatrix = Matrix<double, Nz, Nx>;
+	using KalmanGain = Matrix<double, Nx, Nz>;
+
+private:
 	Vector<double, n> state{};
 	unsigned int k;
 	// Matrices
@@ -35,12 +53,12 @@ class KalmanFilter {
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , GYROSCOPE_NOISE	, 0   , 0   , 0   , 0   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0	, 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 	});
 
 	// TODO: fill this noise matrix
@@ -48,12 +66,12 @@ class KalmanFilter {
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , GYROSCOPE_NOISE	, 0   , 0   , 0   , 0   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0	, 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 	});
 
 	Matrix<double, 9, 9> H_mat = Matrix<double, 9, 9>({
