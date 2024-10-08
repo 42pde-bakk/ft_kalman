@@ -49,7 +49,7 @@ private:
 	Matrix<double, m, m> measurement_covariance_matrix;
 	Matrix<double, n, m> kalman_gain_matrix;
 
-	Matrix<double, n, n> P_mat = Matrix<double, 9, 9>({
+	EstimateCovarianceMatrix P_mat = EstimateCovarianceMatrix({
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
@@ -62,7 +62,7 @@ private:
 	});
 
 	// TODO: fill this noise matrix
-	Matrix<double, n, n> Q_mat = Matrix<double, 9, 9>({
+	ProcessNoiseCovariance Q_mat = ProcessNoiseCovariance({
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
@@ -74,7 +74,7 @@ private:
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 	});
 
-	Matrix<double, 9, 9> H_mat = Matrix<double, 9, 9>({
+	ObservationMatrix H_mat = ObservationMatrix({
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
@@ -86,7 +86,7 @@ private:
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
 	});
 
-	Matrix<double, n, n> R_mat = Matrix<double, n, n>({
+	MeasurementCovariance R_mat = MeasurementCovariance({
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
@@ -113,21 +113,23 @@ private:
 public:
 	explicit KalmanFilter();
 
-	Vector3d predict(size_t time_step, const Matrix<double, n, 1>& inputs);
+	Vector3d predict(size_t time_step, const InputVector &inputs);
 
 	[[nodiscard]] const Vector<double, n>& get_state() const;
 
-	Matrix<double, n, n> extrapolate_covariance(Matrix<double, n, n> F_mat, Matrix<double, n, n> P_mat);
+	///
 
-	Matrix<double, n, n> get_state_transition_matrix(double time_step);
+	EstimateCovarianceMatrix extrapolate_covariance(const StateTransitionMatrix F_mat, const EstimateCovarianceMatrix P_mat);
 
-	Matrix<double, n, 1> calculate_measurement_vector(const Matrix<double, n, 1> &inputs);
+	MeasurementVector calculate_measurement_vector(const InputVector &inputs);
 
-	Matrix<double, n, n> calculate_kalman_gain();
+	KalmanGain calculate_kalman_gain();
 
-	Matrix<double, n, 1> update_state_matrix(Matrix<double, n, n> &kalman, Matrix<double, n, 1> x_prev, Matrix<double, n, 1> z_n);
+	StateVector update_state_matrix(KalmanGain &kalman, StateVector x_prev, MeasurementVector z_n);
 
-	Matrix<double, n, n> update_covariance_matrix(Matrix<double, n, n> &kalman);
+	EstimateCovarianceMatrix update_covariance_matrix(KalmanGain &kalman);
+
+	///
 
 	void set_state(std::array<double, n> &state) {
 		this->state = Matrix<double, n, 1>(state);
