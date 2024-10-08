@@ -80,6 +80,13 @@ Matrix<double, n, n> KalmanFilter::update_covariance_matrix(Matrix<double, n, n>
 	return p_n_n;
 }
 
+double KalmanFilter::get_current_speed() {
+	auto speed = std::sqrt(std::pow(this->state[0][3], 2) + std::pow(this->state[0][4], 2) + std::pow(this->state[0][5], 2));
+	std::cout << "SPEED" << speed << std::endl;
+
+	return speed;
+}
+
 Vector3d KalmanFilter::predict(size_t time_step, const Matrix<double, n, 1>& inputs) {
 	Vector3d predicted_pos;
 
@@ -144,16 +151,4 @@ Vector3d KalmanFilter::predict(size_t time_step, const Matrix<double, n, 1>& inp
 //	x = x0 + vx0 * Δt + 1/2 * ax * Δt^2
 //	y = y0 + vy0 * Δt + 1/2 * ay * Δt^2
 //	z = z0 + vz0 * Δt + 1/2 * az * Δt^2
-}
-
-
-Matrix<double, n, n> KalmanFilter::get_state_transition_matrix(double time_step) {
-	auto mat = Matrix<double, n, n>::identity<n>();
-	for (size_t i = 0; i < 6; i++) {
-		mat[i][i + 3] = time_step;
-	}
-	for (size_t i = 0; i < 3; i++) {
-		mat[i][i + 6] = 0.5 * time_step * time_step;
-	}
-	return (mat);
 }

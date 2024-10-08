@@ -114,6 +114,8 @@ public:
 	void set_state(std::array<double, n> &state) {
 		this->state = Matrix<double, n, 1>(state);
 	}
+
+	double get_current_speed();
 };
 
 
