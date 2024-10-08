@@ -277,7 +277,11 @@ public:
 		return (x);
 	}
 
-	double get_current_speed();
+	double get_current_speed() {
+		auto speed = std::sqrt(std::pow(this->state[0][3], 2) + std::pow(this->state[0][4], 2) + std::pow(this->state[0][5], 2));
+
+		return speed;
+	}
 };
 
 
