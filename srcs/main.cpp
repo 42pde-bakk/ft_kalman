@@ -1,3 +1,4 @@
+#include "UdpConnection.hpp"
 #include <iostream>
 #include <arpa/inet.h>
 #include <cstring>
@@ -6,61 +7,16 @@
 #include "Data.hpp"
 #include "KalmanFilter.hpp"
 #include <fstream>
-#define DEFAULT_PORT 4242
+#include "Arguments.hpp"
 
 std::ofstream of("messages.txt", std::ios::trunc);
-int get_socket_fd() {
-	const int socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
 
-	if (socket_fd == -1) {
-		perror("socket");
-		exit(EXIT_FAILURE);
-	}
-	return (socket_fd);
-}
-
-void init_serveraddr(struct sockaddr_in* serverAddr) {
-	memset(serverAddr, 0, sizeof(*serverAddr));
-	serverAddr->sin_family = AF_INET;
-	serverAddr->sin_port = htons(DEFAULT_PORT);
-	serverAddr->sin_addr.s_addr = inet_addr("127.0.0.1");
-}
-
-void perform_handshake(const int socket_fd, struct sockaddr_in* serverAddr) {
-	const char* handshake = "READY";
-	const ssize_t result = sendto(socket_fd, handshake, strlen(handshake), 0, (struct sockaddr*) serverAddr,
-								  sizeof(*serverAddr));
-
-	if (result == -1) {
-		perror("sendto");
-		exit(EXIT_FAILURE);
-	}
-}
-
-Message get_message(const int socket_fd, struct sockaddr_in* serverAddr) {
-	char buffer[1024];
-	socklen_t addr_len = sizeof(*serverAddr);
-	const ssize_t res = recvfrom(socket_fd, buffer, sizeof(buffer), 0, (struct sockaddr*) serverAddr, &addr_len);
-
-	if (res == -1) {
-		perror("recvfrom");
-		exit(EXIT_FAILURE);
-	}
-	if (res == 0) {
-		exit(EXIT_SUCCESS);
-	}
-	buffer[res] = '\0';
-	of << buffer << " END MESSAGE\n";
-	Message msg(buffer);
-	return (msg);
-}
-
-
-Data read_initial_data(const int socket_fd, struct sockaddr_in* serverAddr) {
+Data read_initial_data(std::vector<Message> messages) {
 	Data data{};
 
-	for (size_t i = 0; i < 8; i++) {
-		Message msg = get_message(socket_fd, serverAddr);
+	for (size_t i = 0; i < messages.size(); i++) {
+		auto msg = messages[i];
+
 		switch (msg.get_message_type()) {
 			case MessageType::TRUE_POSITION:
 				data.set_position(msg.get_data());
@@ -72,15 +28,12 @@ Data read_initial_data(const int socket_fd, struct sockaddr_in* serverAddr) {
 				data.set_acceleration(msg.get_data());
 				break;
 			case MessageType::SPEED:
-				data.set_speed(msg.get_data().front());
+				data.set_speed(msg.get_data().front() / 3.6); // [OK] convert to m/s
 				break;
 			default:
 				break;
 		}
-		std::cerr << "parsing [" << i << "] " << msg << "\n";
 	}
-	std::cerr << "\n\n\n\nDone reading initial data.\n";
-	std::cerr << data << "\n";
 	return (data);
 }
 
@@ -104,34 +57,103 @@ void send_data(const int socket_fd, struct sockaddr_in* serverAddr, const Matrix
 	}
 }
 
-int main() {
-	struct sockaddr_in serverAddr{};
-	const int socket_fd = get_socket_fd();
+int run(Arguments &args) {
+	auto connection = UdpConnection(args.port);
 
-	init_serveraddr(&serverAddr);
-	perform_handshake(socket_fd, &serverAddr);
+	connection.start();
 
-	Data data = read_initial_data(socket_fd, &serverAddr);
-	send_data(socket_fd, &serverAddr, data.get_position());
-	KalmanFilter	filter(data);
+	KalmanFilter<9, 9, 9>	filter;
 
-	of << " DONE PARSING INITIAL DATA\n";
-	of << '\n' << data << '\n';
-	std::cerr << '\n' << data << '\n';
-	std::cerr << "Lets start the messaging loop!\n";
-	int i = 0;
-	auto state_transition_matrix = filter.get_state_transition_matrix(1.0);
-	std::cerr << state_transition_matrix << "\n";
+	auto last_timestamp_at = Timestamp();
+	auto start_timestamp = std::chrono::system_clock::now();
+
+	auto delta = 0;
+	size_t iterations = 0;
+  
 	while (true) {
-		Message msg = get_message(socket_fd, &serverAddr);
-		std::cerr << "[" << i << "] " << msg << "\n";
-//		send_data(socket_fd, &serverAddr, data.get_position());
-		const auto mat = filter.predict(1.0, data.get_acceleration());
-		send_data(socket_fd, &serverAddr, mat);
-		i += 1;
-		if (i > 10)
+		auto messages = connection.get_messages();
+		if (messages.size() == 0) {
 			break;
+		}
+
+		auto data = read_initial_data(messages);
+
+
+		if (iterations == 0) {
+			auto velocity = data.calculate_velocity();
+
+			auto state = std::array<double, 9>({
+				data.get_position()[0][0],
+				data.get_position()[0][1],
+				data.get_position()[0][2],
+				velocity[0][0],
+				velocity[0][1],
+				velocity[0][2],
+				data.get_acceleration(0, 0),
+				data.get_acceleration(0, 1),
+				data.get_acceleration(0, 2),
+			});
+	
+			filter.set_state(state);
+
+		} else {
+			data.set_speed(filter.get_current_speed());
+		}
+
+		auto velocity = data.calculate_velocity();
+
+		auto state = std::array<double, 9>({
+			0,
+			0,
+			0,
+			velocity[0][0],
+			velocity[0][1],
+			velocity[0][2],
+			data.get_acceleration(0, 0),
+			data.get_acceleration(0, 1),
+			data.get_acceleration(0, 2),
+		});
+
+		auto input = Matrix<double, 9, 1>(state);
+
+
+		auto msg_timestamp = messages[0].get_timestamp();
+
+		delta = (msg_timestamp - last_timestamp_at).to_ms();
+
+		const auto mat = filter.predict(delta, input);
+
+		std::cout << mat << std::endl;
+
+		connection.send_data(mat);
+
+		for (size_t i = 0; i < messages.size(); i++)
+		{
+			std::cout << "[" << i << "] " << messages[i] << "\n";
+		}
+
+		iterations++;
+		last_timestamp_at = msg_timestamp;
+
+		if (args.iter_limit != std::string::npos && iterations >= args.iter_limit) {
+			std::cerr << "Iter limit reached, stopping." << std::endl;
+			break;
+		}
+
 	}
 
+	auto end_timestamp = std::chrono::system_clock::now();
+
+	std::cout << "Survived for " << 
+		(end_timestamp - start_timestamp).count() / 1'000'000'000u - 1 << " seconds, iterations: " << iterations << std::endl;
+
+	std::cout << "DONE!" << std::endl;
+
 	return EXIT_SUCCESS;
+}
+
+int main(int argc, char **argv) {
+	Arguments args(argc, argv);
+
+	run(args);
 }

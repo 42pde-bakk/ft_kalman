@@ -39,6 +39,8 @@ public:
 
 	[[nodiscard]] MessageType get_message_type() const;
 
+	[[nodiscard]] Timestamp get_timestamp() const;
+
 	[[nodiscard]] const std::vector<double>& get_data() const;
 
 	friend std::ostream& operator<<(std::ostream& o, const Message& msg);
