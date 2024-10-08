@@ -14,7 +14,7 @@ std::ofstream of("messages.txt", std::ios::trunc);
 Data read_initial_data(std::vector<Message> messages) {
 	Data data{};
 
-	for (size_t i = 0; i < 8; i++) {
+	for (size_t i = 0; i < messages.size(); i++) {
 		auto msg = messages[i];
 
 		switch (msg.get_message_type()) {
@@ -33,10 +33,7 @@ Data read_initial_data(std::vector<Message> messages) {
 			default:
 				break;
 		}
-		std::cerr << "parsing [" << i << "] " << msg << "\n";
 	}
-	std::cerr << "\n\n\n\nDone reading initial data.\n";
-	std::cerr << data << "\n";
 	return (data);
 }
 
@@ -65,14 +62,7 @@ int run(Arguments &args) {
 
 	connection.start();
 
-	auto initial_data = read_initial_data(connection.get_messages());
-
-	KalmanFilter	filter(initial_data);
-
-	of << " DONE PARSING INITIAL DATA\n";
-	of << '\n' << initial_data << '\n';
-	std::cerr << '\n' << initial_data << '\n';
-	std::cerr << "Lets start the messaging loop!\n";
+	KalmanFilter	filter;
 
 	auto last_timestamp_at = Timestamp();
 	auto start_timestamp = std::chrono::system_clock::now();
@@ -81,19 +71,46 @@ int run(Arguments &args) {
 	size_t iterations = 0;
   
 	while (true) {
-		auto velocity = initial_data.calculate_velocity();
+		auto messages = connection.get_messages();
+		if (messages.size() == 0) {
+			break;
+		}
 
-		auto input = Matrix<double, n, 1>(std::array<double, n>({
+		auto data = read_initial_data(messages);
+
+		auto velocity = data.calculate_velocity();
+
+		if (iterations == 0) {
+			auto state = std::array<double, n>({
+				data.get_position()[0][0],
+				data.get_position()[0][1],
+				data.get_position()[0][2],
+				data.get_acceleration(0, 0),
+				data.get_acceleration(0, 1),
+				data.get_acceleration(0, 2),
+				velocity[0][0],
+				velocity[0][1],
+				velocity[0][2],
+			});
+	
+			filter.set_state(state);
+
+		}
+
+
+		auto state = std::array<double, n>({
 			0,
 			0,
 			0,
-			initial_data.get_acceleration(0, 0),
-			initial_data.get_acceleration(0, 1),
-			initial_data.get_acceleration(0, 2),
+			data.get_acceleration(0, 0),
+			data.get_acceleration(0, 1),
+			data.get_acceleration(0, 2),
 			velocity[0][0],
 			velocity[0][1],
 			velocity[0][2],
-		}));
+		});
+
+		auto input = Matrix<double, n, 1>(state);
 
 		const auto mat = filter.predict(delta, input);
 
@@ -101,11 +118,6 @@ int run(Arguments &args) {
 
 		connection.send_data(mat);
 
-    
-		auto messages = connection.get_messages();
-		if (messages.size() == 0) {
-			break;
-		}
 
 		auto msg_timestamp = messages[0].get_timestamp();
 

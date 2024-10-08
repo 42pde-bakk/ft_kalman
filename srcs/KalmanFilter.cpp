@@ -5,17 +5,8 @@
 #include "KalmanFilter.hpp"
 #include <iostream>
 
-KalmanFilter::KalmanFilter(const Data& data) {
-	this->state = data.get_position().vstack(data.calculate_velocity()).vstack(data.get_acceleration());
-
-	this->process_noise_covariance_matrix = Matrix<double, n, n>({
-		std::array<double, n>({pow(GPS_NOISE, 2), 0, 0, 0, 0, 0}),
-		std::array<double, n>({0, pow(GPS_NOISE, 2), 0, 0, 0, 0}),
-		std::array<double, n>({0, 0, pow(GPS_NOISE, 2), 0, 0, 0}),
-		std::array<double, n>({0, 0, 0, (pow(GYROSCOPE_NOISE, 2) + pow(ACCELEROMETER_NOISE, 2) * DT), 0, 0}),
-		std::array<double, n>({0, 0, 0, 0, (pow(GYROSCOPE_NOISE, 2) + pow(ACCELEROMETER_NOISE, 2) * DT), 0}),
-		std::array<double, n>({0, 0, 0, 0, 0, (pow(GYROSCOPE_NOISE, 2) + pow(ACCELEROMETER_NOISE, 2) * DT)})
-	});
+KalmanFilter::KalmanFilter() {
+	this->state = Matrix<double, n, 1>();
 }
 
 
@@ -122,13 +113,13 @@ Vector3d KalmanFilter::predict(size_t time_step, const Matrix<double, n, 1>& inp
 
 	std::cout << "P_MAT\n" << this->P_mat << std::endl;
 
-	auto measurement = this->calculate_measurement_vector(this->state);
+	auto measurement = this->calculate_measurement_vector(inputs);
 
 	std::cout << "MEASUREMENT\n" << measurement << std::endl;
 
 	auto kalman = this->calculate_kalman_gain();
 
-	std::cout << "GAIN\n" << kalman << std::endl;
+	std::cout << "KALMAN GAIN\n" << kalman << std::endl;
 
 	auto updated_state = this->update_state_matrix(kalman, this->state, measurement);
 
@@ -145,8 +136,6 @@ Vector3d KalmanFilter::predict(size_t time_step, const Matrix<double, n, 1>& inp
 	predicted_pos[0][0] = this->state[0][0];
 	predicted_pos[1][0] = this->state[1][0];
 	predicted_pos[2][0] = this->state[2][0];
-
-	std::cout << this->state << "\n-----" << std::endl;
 
 //	auto predicted_mu = A * mu_t + B * u_t;
 //	auto predicted_sigma = A * sigma_t * A.transpose() + Q;

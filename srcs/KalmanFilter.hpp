@@ -29,7 +29,6 @@ class KalmanFilter {
 	Matrix<double, n, n> state_transition_matrix;
 	Matrix<double, m, n> state_to_measurement_matrix;
 	Matrix<double, m, m> measurement_covariance_matrix;
-	Matrix<double, n, n> process_noise_covariance_matrix;
 	Matrix<double, n, m> kalman_gain_matrix;
 
 	Matrix<double, n, n> P_mat = Matrix<double, 9, 9>({
@@ -46,15 +45,15 @@ class KalmanFilter {
 
 	// TODO: fill this noise matrix
 	Matrix<double, n, n> Q_mat = Matrix<double, 9, 9>({
-		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0    ,0    , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , 0	, 0   , 0   , 0   , 0   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , GYROSCOPE_NOISE	, 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE}),
 	});
 
 	Matrix<double, 9, 9> H_mat = Matrix<double, 9, 9>({
@@ -70,15 +69,15 @@ class KalmanFilter {
 	});
 
 	Matrix<double, n, n> R_mat = Matrix<double, n, n>({
-		std::array<double, 9>({ 0  , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }),
-		std::array<double, 9>({ 0  , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }),
-		std::array<double, 9>({ 0  , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }),
-		std::array<double, 9>({ 0  , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }),
-		std::array<double, 9>({ 0  , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }),
-		std::array<double, 9>({ 0  , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }),
-		std::array<double, 9>({ 0  , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }),
-		std::array<double, 9>({ 0  , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }),
-		std::array<double, 9>({ 0  , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , GYROSCOPE_NOISE	, 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE}),
 	});
 
 	Matrix<double, n, n> identity = Matrix<double, n, n>({
@@ -93,10 +92,8 @@ class KalmanFilter {
 		std::array<double, 9>({ 0  , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 1 }),
 	});
 
-
-	KalmanFilter() = default;
 public:
-	explicit KalmanFilter(const Data& data);
+	explicit KalmanFilter();
 
 	Vector3d predict(size_t time_step, const Matrix<double, n, 1>& inputs);
 
@@ -113,6 +110,10 @@ public:
 	Matrix<double, n, 1> update_state_matrix(Matrix<double, n, n> &kalman, Matrix<double, n, 1> x_prev, Matrix<double, n, 1> z_n);
 
 	Matrix<double, n, n> update_covariance_matrix(Matrix<double, n, n> &kalman);
+
+	void set_state(std::array<double, n> &state) {
+		this->state = Matrix<double, n, 1>(state);
+	}
 };
 
 
