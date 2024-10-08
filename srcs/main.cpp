@@ -62,7 +62,7 @@ int run(Arguments &args) {
 
 	connection.start();
 
-	KalmanFilter	filter;
+	KalmanFilter<9, 9, 9>	filter;
 
 	auto last_timestamp_at = Timestamp();
 	auto start_timestamp = std::chrono::system_clock::now();
@@ -82,7 +82,7 @@ int run(Arguments &args) {
 		if (iterations == 0) {
 			auto velocity = data.calculate_velocity();
 
-			auto state = std::array<double, n>({
+			auto state = std::array<double, 9>({
 				data.get_position()[0][0],
 				data.get_position()[0][1],
 				data.get_position()[0][2],
@@ -102,7 +102,7 @@ int run(Arguments &args) {
 
 		auto velocity = data.calculate_velocity();
 
-		auto state = std::array<double, n>({
+		auto state = std::array<double, 9>({
 			0,
 			0,
 			0,
@@ -114,7 +114,7 @@ int run(Arguments &args) {
 			data.get_acceleration(0, 2),
 		});
 
-		auto input = Matrix<double, n, 1>(state);
+		auto input = Matrix<double, 9, 1>(state);
 
 
 		auto msg_timestamp = messages[0].get_timestamp();
