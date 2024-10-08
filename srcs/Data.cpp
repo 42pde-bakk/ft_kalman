@@ -45,17 +45,15 @@ double Data::get_acceleration(size_t row_nb, size_t col_nb) const {
 	return (this->acceleration[row_nb][col_nb]);
 }
 
-#include <iostream>
 Vector3d Data::calculate_velocity() const {
-	auto speed_m_s = this->speed / 3.6;
 	// double roll = this->direction[0][0];
 	double pitch = this->direction[1][0];
 	double yaw = this->direction[2][0];
 
 	Vector3d velocity(std::array<double, 3>({
-		speed_m_s * std::cos(pitch) * std::cos(yaw),
-		speed_m_s * std::cos(pitch) * std::sin(yaw),
-		speed_m_s * std::sin(pitch)
+		this->speed * std::cos(pitch) * std::cos(yaw),
+		this->speed * std::cos(pitch) * std::sin(yaw),
+		this->speed * std::sin(pitch)
 	}));
 
 	return velocity;

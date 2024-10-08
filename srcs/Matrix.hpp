@@ -65,9 +65,9 @@ public:
 	}
 
 	template<size_t ROW_AMOUNT_2, size_t COLUMN_AMOUNT_2>
-	Matrix<T, ROW_AMOUNT, COLUMN_AMOUNT_2> operator*(const Matrix<T, ROW_AMOUNT_2, COLUMN_AMOUNT_2>& rhs) {
+	Matrix<T, ROW_AMOUNT, COLUMN_AMOUNT_2> operator*(const Matrix<T, ROW_AMOUNT_2, COLUMN_AMOUNT_2>& rhs) const {
 		assert(COLUMN_AMOUNT == ROW_AMOUNT_2);
-		Matrix<T, ROW_AMOUNT, COLUMN_AMOUNT_2> out;
+		auto out = Matrix<double, ROW_AMOUNT, COLUMN_AMOUNT_2>();
 
 		for (size_t a = 0; a < ROW_AMOUNT; a++) {
 			for (size_t b = 0; b < COLUMN_AMOUNT_2; b++) {
@@ -93,7 +93,7 @@ public:
 	}
 
 	[[nodiscard]] Matrix transpose() const {
-		Matrix<T, COLUMN_AMOUNT, ROW_AMOUNT> out;
+		auto out = Matrix<double, ROW_AMOUNT, COLUMN_AMOUNT>();
 
 		for (size_t row = 0; row < ROW_AMOUNT; row++) {
 			for (size_t column = 0; column < COLUMN_AMOUNT; column++) {
@@ -106,11 +106,11 @@ public:
 	template<size_t R>
 	[[nodiscard]] Matrix<double, ROW_AMOUNT + R, COLUMN_AMOUNT>	vstack(const Matrix<T, R, COLUMN_AMOUNT>& rhs) const {
 		auto out = Matrix<double, ROW_AMOUNT + R, COLUMN_AMOUNT>();
-		for (size_t r = 0; r < R; r++) {
+		for (size_t r = 0; r < ROW_AMOUNT; r++) {
 			out.data[r] = this->data[r];
 		}
 		for (size_t r = 0; r < R; r++) {
-			out.data[R + r] = rhs.data[r];
+			out.data[ROW_AMOUNT + r] = rhs.data[r];
 		}
 
 		return (out);
@@ -136,8 +136,42 @@ public:
 		return (o);
 	}
 
-};
+	template<size_t COL>
+	Matrix operator+(const Matrix<T, ROW_AMOUNT, COL> &rhs) const {
+		Matrix out(*this);
 
+		for (size_t row = 0; row < ROW_AMOUNT; row++) {
+			for (size_t column = 0; column < COLUMN_AMOUNT; column++) {
+				out[row][column] += rhs[row][column];
+			}
+		}
+		return (out);
+	}
+
+	template<size_t COL>
+	Matrix operator-(const Matrix<T, ROW_AMOUNT, COL> &rhs) const {
+		Matrix out(*this);
+
+		for (size_t row = 0; row < ROW_AMOUNT; row++) {
+			for (size_t column = 0; column < COLUMN_AMOUNT; column++) {
+				out[row][column] -= rhs[row][column];
+			}
+		}
+		return (out);
+	}
+
+	Matrix pow(long double n) const {
+		Matrix out(*this);
+
+		for (size_t row = 0; row < ROW_AMOUNT; row++) {
+			for (size_t column = 0; column < COLUMN_AMOUNT; column++) {
+				if (out[row][column] != 0)
+					out[row][column] = std::pow(out[row][column], n);
+			}
+		}
+		return (out);
+	}
+};
 
 template<typename T, size_t ROW_AMOUNT_VEC>
 using Vector = Matrix<T, ROW_AMOUNT_VEC, 1>;
