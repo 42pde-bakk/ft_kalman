@@ -64,6 +64,36 @@ int run(Arguments &args) {
 
 	KalmanFilter<9, 6, 9>	filter;
 
+	filter.set_P_mat(KalmanFilter<9,6,9>::EstimateCovarianceMatrix({
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 100	, 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 100   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 100   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 200   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 200   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 200}),
+	}));
+
+	filter.set_H_mat(KalmanFilter<9,6,9>::ObservationMatrix({
+		std::array<double, 9>({ 0  , 0  , 0   , 1   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 1   , 0   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 1   , 0   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0	 , 0   , 0   , 1   , 0   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0}),
+		std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
+	}));
+
+	filter.set_R_mat(KalmanFilter<9,6,9>::MeasurementCovariance({
+		std::array<double, 6>({ 0  , 0  , 0   , 0   , 0   , 0 }),
+		std::array<double, 6>({ 0  , 0  , 0   , 0   , 0   , 0 }),
+		std::array<double, 6>({ 0  , 0  , 0   , 0   , 0   , 0 }),
+		std::array<double, 6>({ 0  , 0  , 0   , 0   , 0   , 0 }),
+		std::array<double, 6>({ 0  , 0  , 0   , 0   , 0   , 0 }),
+		std::array<double, 6>({ 0  , 0  , 0   , 0   , 0   , 0 }),
+	}));
+
 	auto last_timestamp_at = Timestamp();
 	auto start_timestamp = std::chrono::system_clock::now();
 

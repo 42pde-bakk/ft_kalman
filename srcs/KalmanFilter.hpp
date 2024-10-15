@@ -41,51 +41,26 @@ public:
 private:
 	Vector<double, Nx> state{};
 
-	EstimateCovarianceMatrix P_mat = EstimateCovarianceMatrix({
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 100	, 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 100   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 100   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 200   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 200   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 200}),
-	});
-
-	ObservationMatrix H_mat = ObservationMatrix({
-		std::array<double, Nx>({ 0  , 0  , 0   , 1   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 1   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 1   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0	 , 0   , 0   , 1   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
-	});
-
-	MeasurementCovariance R_mat = MeasurementCovariance({
-		std::array<double, Nz>({ 0  , 0  , 0   , 1	 , 0   , 0 }),
-		std::array<double, Nz>({ 0  , 0  , 0   , 0   , 1   , 0 }),
-		std::array<double, Nz>({ 0  , 0  , 0   , 0   , 0   , 1 }),
-		std::array<double, Nz>({ 0  , 0  , 0   , 0   , 0   , 0 }),
-		std::array<double, Nz>({ 0  , 0  , 0   , 0   , 0   , 0 }),
-		std::array<double, Nz>({ 0  , 0  , 0   , 0   , 0   , 0 }),
-	});
-
-	Matrix<double, Nx, Nx> identity = Matrix<double, Nx, Nx>({
-		std::array<double, Nx>({ 1  , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }),
-		std::array<double, Nx>({ 0  , 1 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }),
-		std::array<double, Nx>({ 0  , 0 , 1 , 0 , 0 , 0 , 0 , 0 , 0 }),
-		std::array<double, Nx>({ 0  , 0 , 0 , 1 , 0 , 0 , 0 , 0 , 0 }),
-		std::array<double, Nx>({ 0  , 0 , 0 , 0 , 1 , 0 , 0 , 0 , 0 }),
-		std::array<double, Nx>({ 0  , 0 , 0 , 0 , 0 , 1 , 0 , 0 , 0 }),
-		std::array<double, Nx>({ 0  , 0 , 0 , 0 , 0 , 0 , 1 , 0 , 0 }),
-		std::array<double, Nx>({ 0  , 0 , 0 , 0 , 0 , 0 , 0 , 1 , 0 }),
-		std::array<double, Nx>({ 0  , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 1 }),
-	});
+	EstimateCovarianceMatrix P_mat;
+	ObservationMatrix H_mat;
+	MeasurementCovariance R_mat;
+	Matrix<double, Nx, Nx> identity = Matrix<double, Nx, Nx>::template identity<Nx>();
 
 public:
 	explicit KalmanFilter() {
 		this->state = Matrix<double, Nx, 1>();
+	}
+
+	void set_P_mat(const EstimateCovarianceMatrix &P_mat) {
+		this->P_mat = P_mat;
+	}
+
+	void set_H_mat(const ObservationMatrix &H_mat) {
+		this->H_mat = H_mat;
+	}
+
+	void set_R_mat(const MeasurementCovariance &R_mat) {
+		this->R_mat = R_mat;
 	}
 
 	// Vector3d predict(size_t time_step, const InputVector &inputs);
@@ -112,16 +87,16 @@ public:
 		// acceleration squared.
 		auto acsq = 0.5 * time * time;
 
-		auto F_mat = Matrix<double, 9, 9>({
-			std::array<double, 9>({ 1  , 0  , 0   , time, 0   , 0   , acsq, 0   , 0}),
-			std::array<double, 9>({ 0  , 1  , 0   , 0   , time, 0   , 0   , acsq, 0}),
-			std::array<double, 9>({ 0  , 0  , 1   , 0   , 0   , time, 0   , 0   , acsq}),
-			std::array<double, 9>({ 0  , 0  , 0   , 1	, 0   , 0   , time, 0   , 0}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 1   , 0   , 0   , time, 0}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 1   , 0   , 0   , time}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 1   , 0   , 0}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
+		auto F_mat = StateTransitionMatrix({
+			std::array<double, Nx>({ 1  , 0  , 0   , time, 0   , 0   , acsq, 0   , 0}),
+			std::array<double, Nx>({ 0  , 1  , 0   , 0   , time, 0   , 0   , acsq, 0}),
+			std::array<double, Nx>({ 0  , 0  , 1   , 0   , 0   , time, 0   , 0   , acsq}),
+			std::array<double, Nx>({ 0  , 0  , 0   , 1	 , 0   , 0   , time, 0   , 0}),
+			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 1   , 0   , 0   , time, 0}),
+			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 1   , 0   , 0   , time}),
+			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 1   , 0   , 0}),
+			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0}),
+			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
 		});
 
 		this->state = F_mat * this->state;
@@ -183,16 +158,16 @@ public:
 	}
 
 	ProcessNoiseCovariance generate_process_noise_covariance(const StateTransitionMatrix &F_mat) {
-		auto Q_mat = Matrix<double, 9, 9>({
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0	, 0   , 0   , 0   , 0   , 0}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 1   , 0   , 0}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
+		auto Q_mat = ProcessNoiseCovariance({
+			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+			std::array<double, Nx>({ 0  , 0  , 0   , 0	, 0   , 0   , 0   , 0   , 0}),
+			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 1   , 0   , 0}),
+			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0}),
+			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
 		});
 
 		return F_mat * Q_mat * F_mat.transpose();
