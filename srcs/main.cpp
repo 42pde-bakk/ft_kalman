@@ -62,7 +62,7 @@ int run(Arguments &args) {
 
 	connection.start();
 
-	KalmanFilter<9, 9, 9>	filter;
+	KalmanFilter<9, 6, 9>	filter;
 
 	auto last_timestamp_at = Timestamp();
 	auto start_timestamp = std::chrono::system_clock::now();

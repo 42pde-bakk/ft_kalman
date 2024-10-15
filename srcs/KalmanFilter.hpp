@@ -54,9 +54,6 @@ private:
 	});
 
 	ObservationMatrix H_mat = ObservationMatrix({
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, Nx>({ 0  , 0  , 0   , 1   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 1   , 0   , 0   , 0   , 0}),
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 1   , 0   , 0   , 0}),
@@ -66,15 +63,12 @@ private:
 	});
 
 	MeasurementCovariance R_mat = MeasurementCovariance({
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , GYROSCOPE_NOISE	, 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE}),
+		std::array<double, Nz>({ 0  , 0  , 0   , 1	 , 0   , 0 }),
+		std::array<double, Nz>({ 0  , 0  , 0   , 0   , 1   , 0 }),
+		std::array<double, Nz>({ 0  , 0  , 0   , 0   , 0   , 1 }),
+		std::array<double, Nz>({ 0  , 0  , 0   , 0   , 0   , 0 }),
+		std::array<double, Nz>({ 0  , 0  , 0   , 0   , 0   , 0 }),
+		std::array<double, Nz>({ 0  , 0  , 0   , 0   , 0   , 0 }),
 	});
 
 	Matrix<double, Nx, Nx> identity = Matrix<double, Nx, Nx>({
@@ -225,13 +219,16 @@ public:
 
 	KalmanGain calculate_kalman_gain() {
 		// Kn = Pn,n-1HT(HPn,n-1HT + Rn)^-1
-		KalmanGain k_n = this->P_mat * this->H_mat.transpose() * (this->H_mat * this->P_mat * this->H_mat.transpose() + this->R_mat).pow(-1);
+		KalmanGain k_n = 
+			this->P_mat * this->H_mat.transpose() * 
+			(this->H_mat * this->P_mat * this->H_mat.transpose() + this->R_mat).pow(-1);
 
 		if (k_n.max() > 1 || k_n.min() < 0) {
 			std::cout << "_--=--=-=-=-=-=-==-" << std::endl;
 			std::cout << this->P_mat * this->H_mat.transpose() << std::endl;
 			std::cout << (this->H_mat * this->P_mat * this->H_mat.transpose() + this->R_mat) << std::endl;
 			std::cout << (this->H_mat * this->P_mat * this->H_mat.transpose() + this->R_mat).pow(-1) << std::endl;
+			std::cout << k_n << std::endl;
 
 			assert(false);
 		}
@@ -275,6 +272,8 @@ public:
 				this->P_mat *
 				(this->identity - kalman * this->H_mat).transpose() +
 				kalman * this->R_mat * kalman.transpose();
+
+		std::cout << "5: " << p_n_n << std::endl;
 
 		return p_n_n;
 	}

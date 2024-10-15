@@ -92,8 +92,8 @@ public:
 		return (out);
 	}
 
-	[[nodiscard]] Matrix transpose() const {
-		auto out = Matrix<double, ROW_AMOUNT, COLUMN_AMOUNT>();
+	[[nodiscard]] Matrix<T, COLUMN_AMOUNT, ROW_AMOUNT> transpose() const {
+		auto out = Matrix<T, COLUMN_AMOUNT, ROW_AMOUNT>();
 
 		for (size_t row = 0; row < ROW_AMOUNT; row++) {
 			for (size_t column = 0; column < COLUMN_AMOUNT; column++) {
