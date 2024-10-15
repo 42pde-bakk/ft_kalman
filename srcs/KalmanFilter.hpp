@@ -53,19 +53,6 @@ private:
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 200}),
 	});
 
-	// TODO: fill this noise matrix
-	ProcessNoiseCovariance Q_mat = ProcessNoiseCovariance({
-		std::array<double, Nx>({ 1  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 1  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 1   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 1	 , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 1   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 1   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 1   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
-	});
-
 	ObservationMatrix H_mat = ObservationMatrix({
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
@@ -149,7 +136,11 @@ public:
 
 		std::cout << "F_MAT\n" << F_mat << std::endl;
 
-		this->P_mat = this->extrapolate_covariance(F_mat, this->P_mat);
+		auto Q_mat = this->generate_process_noise_covariance(F_mat);
+
+		std::cout << "Q_MAT\n" << Q_mat << std::endl;
+
+		this->P_mat = this->extrapolate_covariance(F_mat, this->P_mat, Q_mat);
 
 		std::cout << "P_MAT\n" << this->P_mat << std::endl;
 
@@ -190,11 +181,27 @@ public:
 		return (this->state);
 	}
 
-	Matrix<double, Nx, Nx> extrapolate_covariance(const StateTransitionMatrix F_mat, const EstimateCovarianceMatrix P_mat) {
+	Matrix<double, Nx, Nx> extrapolate_covariance(const StateTransitionMatrix &F_mat, const EstimateCovarianceMatrix &P_mat, const ProcessNoiseCovariance &Q_mat) {
 		// Pn+1,n=FPn,nFT
-		auto P_n1_mat = F_mat * P_mat * F_mat.transpose() + this->Q_mat;
+		auto P_n1_mat = F_mat * P_mat * F_mat.transpose() + Q_mat;
 
 		return P_n1_mat;
+	}
+
+	ProcessNoiseCovariance generate_process_noise_covariance(const StateTransitionMatrix &F_mat) {
+		auto Q_mat = Matrix<double, 9, 9>({
+			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+			std::array<double, 9>({ 0  , 0  , 0   , 0	, 0   , 0   , 0   , 0   , 0}),
+			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 1   , 0   , 0}),
+			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0}),
+			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
+		});
+
+		return F_mat * Q_mat * F_mat.transpose();
 	}
 
 	Matrix<double, Nx, Nx> get_state_transition_matrix(double time_step) {
