@@ -136,8 +136,7 @@ public:
 		return (o);
 	}
 
-	template<size_t COL>
-	Matrix operator+(const Matrix<T, ROW_AMOUNT, COL> &rhs) const {
+	Matrix operator+(const Matrix &rhs) const {
 		Matrix out(*this);
 
 		for (size_t row = 0; row < ROW_AMOUNT; row++) {
@@ -148,8 +147,7 @@ public:
 		return (out);
 	}
 
-	template<size_t COL>
-	Matrix operator-(const Matrix<T, ROW_AMOUNT, COL> &rhs) const {
+	Matrix operator-(const Matrix &rhs) const {
 		Matrix out(*this);
 
 		for (size_t row = 0; row < ROW_AMOUNT; row++) {
@@ -170,6 +168,30 @@ public:
 			}
 		}
 		return (out);
+	}
+
+	T max() const {
+		T val = -INFINITY;
+
+		for (size_t row = 0; row < ROW_AMOUNT; row++) {
+			for (size_t column = 0; column < COLUMN_AMOUNT; column++) {
+				if (this->data[row][column] > val)
+					val = this->data[row][column];
+			}
+		}
+		return (val);
+	}
+
+	T min() const {
+		T val = INFINITY;
+
+		for (size_t row = 0; row < ROW_AMOUNT; row++) {
+			for (size_t column = 0; column < COLUMN_AMOUNT; column++) {
+				if (this->data[row][column] < val)
+					val = this->data[row][column];
+			}
+		}
+		return (val);
 	}
 };
 

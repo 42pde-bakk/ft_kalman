@@ -40,52 +40,45 @@ public:
 
 private:
 	Vector<double, Nx> state{};
-	unsigned int k;
-	// Matrices
-	Matrix<double, Nx, Nx> state_covariance_matrix;
-	Matrix<double, Nx, Nx> state_transition_matrix;
-	Matrix<double, Nz, Nx> state_to_measurement_matrix;
-	Matrix<double, Nz, Nz> measurement_covariance_matrix;
-	Matrix<double, Nx, Nz> kalman_gain_matrix;
 
-	Matrix<double, Nx, Nx> P_mat = Matrix<double, Nx, Nx>({
+	EstimateCovarianceMatrix P_mat = EstimateCovarianceMatrix({
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , GYROSCOPE_NOISE	, 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 100	, 0   , 0   , 0   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 100   , 0   , 0   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 100   , 0   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 200   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 200   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 200}),
 	});
 
 	// TODO: fill this noise matrix
-	Matrix<double, Nx, Nx> Q_mat = Matrix<double, Nx, Nx>({
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , GYROSCOPE_NOISE	, 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE}),
+	ProcessNoiseCovariance Q_mat = ProcessNoiseCovariance({
+		std::array<double, Nx>({ 1  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 1  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 1   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 1	 , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 1   , 0   , 0   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 1   , 0   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 1   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
 	});
 
-	Matrix<double, Nx, Nx> H_mat = Matrix<double, Nx, Nx>({
+	ObservationMatrix H_mat = ObservationMatrix({
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, Nx>({ 0  , 0  , 0   , 1   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 1   , 0   , 0   , 0   , 0}),
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 1   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0	, 0   , 0   , 1   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0	 , 0   , 0   , 1   , 0   , 0}),
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0}),
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
 	});
 
-	Matrix<double, Nx, Nx> R_mat = Matrix<double, Nx, Nx>({
+	MeasurementCovariance R_mat = MeasurementCovariance({
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
@@ -131,7 +124,6 @@ public:
 	///
 
 	Vector3d predict(size_t time_step, const InputVector& inputs) {
-		std::cout << "IN" << this->state << std::endl;
 		Vector3d predicted_pos;
 
 		auto time = (double)time_step / 1000;
@@ -154,6 +146,8 @@ public:
 		this->state = F_mat * this->state;
 
 		std::cout << "STATE\n" << this->state << std::endl;
+
+		std::cout << "F_MAT\n" << F_mat << std::endl;
 
 		this->P_mat = this->extrapolate_covariance(F_mat, this->P_mat);
 
@@ -224,7 +218,16 @@ public:
 
 	KalmanGain calculate_kalman_gain() {
 		// Kn = Pn,n-1HT(HPn,n-1HT + Rn)^-1
-		auto k_n = this->P_mat * this->H_mat.transpose() * (this->H_mat * this->P_mat * this->H_mat.transpose() + this->R_mat).pow(-1);
+		KalmanGain k_n = this->P_mat * this->H_mat.transpose() * (this->H_mat * this->P_mat * this->H_mat.transpose() + this->R_mat).pow(-1);
+
+		if (k_n.max() > 1 || k_n.min() < 0) {
+			std::cout << "_--=--=-=-=-=-=-==-" << std::endl;
+			std::cout << this->P_mat * this->H_mat.transpose() << std::endl;
+			std::cout << (this->H_mat * this->P_mat * this->H_mat.transpose() + this->R_mat) << std::endl;
+			std::cout << (this->H_mat * this->P_mat * this->H_mat.transpose() + this->R_mat).pow(-1) << std::endl;
+
+			assert(false);
+		}
 
 		// auto k_n = this->P_mat * this->H_mat.transpose();
 
@@ -254,6 +257,11 @@ public:
 
 	EstimateCovarianceMatrix update_covariance_matrix(KalmanGain &kalman) {
 		// P_n,n = (I - KnH)P_n,n-1(I - KnH)T + KnRnKnT
+
+		std::cout << "1: " << (this->identity - kalman * this->H_mat) << std::endl;
+		std::cout << "2: " << this->P_mat << std::endl;
+		std::cout << "3: " << (this->identity - kalman * this->H_mat).transpose() << std::endl;
+		std::cout << "4: " << kalman * this->R_mat * kalman.transpose() << std::endl;
 
 		auto p_n_n =
 				(this->identity - kalman * this->H_mat) *
