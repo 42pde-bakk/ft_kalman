@@ -39,7 +39,9 @@ public:
 	using KalmanGain = Matrix<double, Nx, Nz>;
 
 private:
-	Vector<double, Nx> state{};
+	Vector<double, Nx> previousState{};
+	Vector<double, Nx> currenState{};
+	Vector<double, Nx> predictedState{};
 	unsigned int k;
 	// Matrices
 	Matrix<double, Nx, Nx> state_covariance_matrix;
@@ -111,7 +113,7 @@ private:
 
 public:
 	explicit KalmanFilter() {
-		this->state = Matrix<double, Nx, 1>();
+		this->currenState = Matrix<double, Nx, 1>();
 	}
 
 	// Vector3d predict(size_t time_step, const InputVector &inputs);
@@ -131,8 +133,7 @@ public:
 	///
 
 	Vector3d predict(size_t time_step, const InputVector& inputs) {
-		std::cout << "IN" << this->state << std::endl;
-		Vector3d predicted_pos;
+		std::cout << "IN" << this->currenState << std::endl;
 
 		auto time = (double)time_step / 1000;
 
@@ -151,9 +152,9 @@ public:
 			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
 		});
 
-		this->state = F_mat * this->state;
+		this->currenState = F_mat * this->currenState;
 
-		std::cout << "STATE\n" << this->state << std::endl;
+		std::cout << "STATE\n" << this->currenState << std::endl;
 
 		this->P_mat = this->extrapolate_covariance(F_mat, this->P_mat);
 
@@ -167,11 +168,11 @@ public:
 
 		std::cout << "KALMAN GAIN\n" << kalman << std::endl;
 
-		auto updated_state = this->update_state_matrix(kalman, this->state, measurement);
+		this->predictedState = this->update_state_matrix(kalman, this->currenState, measurement);
 
-		std::cout << "UPDATED\n" << updated_state << std::endl;
+		std::cout << "UPDATED\n" << this->predictedState << std::endl;
 
-		this->state = updated_state;
+		this->currenState = this->predictedState;
 
 		auto updated_covariance = this->update_covariance_matrix(kalman);
 
@@ -179,9 +180,11 @@ public:
 
 		this->P_mat = updated_covariance;
 
-		predicted_pos[0][0] = this->state[0][0];
-		predicted_pos[1][0] = this->state[1][0];
-		predicted_pos[2][0] = this->state[2][0];
+		Vector3d predicted_pos;
+
+		predicted_pos[0][0] = this->predictedState[0][0];
+		predicted_pos[1][0] = this->predictedState[1][0];
+		predicted_pos[2][0] = this->predictedState[2][0];
 
 	//	auto predicted_mu = A * mu_t + B * u_t;
 	//	auto predicted_sigma = A * sigma_t * A.transpose() + Q;
@@ -193,7 +196,7 @@ public:
 	}
 
 	[[nodiscard]] const Vector<double, Nx>& get_state() const {
-		return (this->state);
+		return (this->currenState);
 	}
 
 	Matrix<double, Nx, Nx> extrapolate_covariance(const StateTransitionMatrix F_mat, const EstimateCovarianceMatrix P_mat) {
@@ -265,7 +268,7 @@ public:
 	}
 
 	void set_state(std::array<double, Nx> &state) {
-		this->state = Matrix<double, Nx, 1>(state);
+		this->currenState = Matrix<double, Nx, 1>(state);
 	}
 
 	Matrix<double, Nx, 1> get_initial_process_noise() {
@@ -278,7 +281,7 @@ public:
 	}
 
 	double get_current_speed() {
-		auto speed = std::sqrt(std::pow(this->state[0][3], 2) + std::pow(this->state[0][4], 2) + std::pow(this->state[0][5], 2));
+		auto speed = std::sqrt(std::pow(this->currenState[0][3], 2) + std::pow(this->currenState[0][4], 2) + std::pow(this->currenState[0][5], 2));
 
 		return speed;
 	}
