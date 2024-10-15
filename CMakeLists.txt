@@ -29,7 +29,10 @@ FetchContent_MakeAvailable(Catch2)
 
 # Add the directory with KalmanFilter.hpp and Matrix.hpp to the include directories
 include_directories(srcs)
-add_executable(tests tests/main.cpp ${SOURCES})
+add_executable(tests
+        tests/mainTests.cpp
+        tests/MatrixTests.cpp
+        ${SOURCES})
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
 
 #add_executable(test tests/main.cpp ${SOURCES})
