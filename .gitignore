@@ -35,3 +35,7 @@
 cmake-build-debug/
 ft_kalman
 messages.txt
+
+#Cmake tests
+Testing/
+build/
