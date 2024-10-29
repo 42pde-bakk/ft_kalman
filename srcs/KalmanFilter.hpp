@@ -51,64 +51,64 @@ private:
 	Matrix<double, Nx, Nz> kalman_gain_matrix;
 
 	Matrix<double, Nx, Nx> P_mat = Matrix<double, Nx, Nx>({
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , GYROSCOPE_NOISE	, 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE}),
+		{ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , GYROSCOPE_NOISE	, 0   , 0   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE},
 	});
 
 	// TODO: fill this noise matrix
 	Matrix<double, Nx, Nx> Q_mat = Matrix<double, Nx, Nx>({
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , GYROSCOPE_NOISE	, 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE}),
+		{ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , GYROSCOPE_NOISE	, 0   , 0   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE},
 	});
 
 	Matrix<double, Nx, Nx> H_mat = Matrix<double, Nx, Nx>({
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 1   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 1   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 1   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0	, 0   , 0   , 1   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
+		{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 1   , 0   , 0   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 1   , 0   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 1   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 0	, 0   , 0   , 1   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1},
 	});
 
 	Matrix<double, Nx, Nx> R_mat = Matrix<double, Nx, Nx>({
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , GYROSCOPE_NOISE	, 0   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0}),
-		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE}),
+		{ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , GYROSCOPE_NOISE	, 0   , 0   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0},
+		{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE},
 	});
 
 	Matrix<double, Nx, Nx> identity = Matrix<double, Nx, Nx>({
-		std::array<double, Nx>({ 1  , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }),
-		std::array<double, Nx>({ 0  , 1 , 0 , 0 , 0 , 0 , 0 , 0 , 0 }),
-		std::array<double, Nx>({ 0  , 0 , 1 , 0 , 0 , 0 , 0 , 0 , 0 }),
-		std::array<double, Nx>({ 0  , 0 , 0 , 1 , 0 , 0 , 0 , 0 , 0 }),
-		std::array<double, Nx>({ 0  , 0 , 0 , 0 , 1 , 0 , 0 , 0 , 0 }),
-		std::array<double, Nx>({ 0  , 0 , 0 , 0 , 0 , 1 , 0 , 0 , 0 }),
-		std::array<double, Nx>({ 0  , 0 , 0 , 0 , 0 , 0 , 1 , 0 , 0 }),
-		std::array<double, Nx>({ 0  , 0 , 0 , 0 , 0 , 0 , 0 , 1 , 0 }),
-		std::array<double, Nx>({ 0  , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 1 }),
+		{ 1  , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 0 },
+		{ 0  , 1 , 0 , 0 , 0 , 0 , 0 , 0 , 0 },
+		{ 0  , 0 , 1 , 0 , 0 , 0 , 0 , 0 , 0 },
+		{ 0  , 0 , 0 , 1 , 0 , 0 , 0 , 0 , 0 },
+		{ 0  , 0 , 0 , 0 , 1 , 0 , 0 , 0 , 0 },
+		{ 0  , 0 , 0 , 0 , 0 , 1 , 0 , 0 , 0 },
+		{ 0  , 0 , 0 , 0 , 0 , 0 , 1 , 0 , 0 },
+		{ 0  , 0 , 0 , 0 , 0 , 0 , 0 , 1 , 0 },
+		{ 0  , 0 , 0 , 0 , 0 , 0 , 0 , 0 , 1 },
 	});
 
 public:
@@ -141,15 +141,15 @@ public:
 		auto acsq = 0.5 * time * time;
 
 		auto F_mat = Matrix<double, 9, 9>({
-			std::array<double, 9>({ 1  , 0  , 0   , time, 0   , 0   , acsq, 0   , 0}),
-			std::array<double, 9>({ 0  , 1  , 0   , 0   , time, 0   , 0   , acsq, 0}),
-			std::array<double, 9>({ 0  , 0  , 1   , 0   , 0   , time, 0   , 0   , acsq}),
-			std::array<double, 9>({ 0  , 0  , 0   , 1	, 0   , 0   , time, 0   , 0}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 1   , 0   , 0   , time, 0}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 1   , 0   , 0   , time}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 1   , 0   , 0}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0}),
-			std::array<double, 9>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
+			{ 1  , 0  , 0   , time, 0   , 0   , acsq, 0   , 0},
+			{ 0  , 1  , 0   , 0   , time, 0   , 0   , acsq, 0},
+			{ 0  , 0  , 1   , 0   , 0   , time, 0   , 0   , acsq},
+			{ 0  , 0  , 0   , 1	, 0   , 0   , time, 0   , 0},
+			{ 0  , 0  , 0   , 0   , 1   , 0   , 0   , time, 0},
+			{ 0  , 0  , 0   , 0   , 0   , 1   , 0   , 0   , time},
+			{ 0  , 0  , 0   , 0   , 0   , 0   , 1   , 0   , 0},
+			{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0},
+			{ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1},
 		});
 
 		this->currenState = F_mat * this->currenState;
@@ -272,9 +272,9 @@ public:
 	}
 
 	Matrix<double, Nx, 1> get_initial_process_noise() {
-		const Vector3d gps_noise(std::array<double, 3>({0.1, 0.1, 0.1}));
-		const Vector3d acceleration_noise(std::array<double, 3>({0.001, 0.001, 0.001}));
-		const Vector3d gyroscope_noise(std::array<double, 3>({0.01, 0.01, 0.01}));
+		const Vector3d gps_noise({0.1, 0.1, 0.1});
+		const Vector3d acceleration_noise({0.001, 0.001, 0.001});
+		const Vector3d gyroscope_noise({0.01, 0.01, 0.01});
 
 		auto x = gps_noise.vstack(acceleration_noise).vstack(gyroscope_noise);
 		return (x);
