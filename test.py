@@ -2,6 +2,15 @@ import numpy as np
 
 np.set_printoptions(linewidth=100)
 
+F = np.array([
+    [1, 1, 0.5,0,  0,  0],
+    [0, 1, 1,  0,  0,  0],
+    [0, 0, 1,  0,  0,  0],
+    [0, 0, 0,  1,  1,  0.5],
+    [0, 0, 0,  0,  1,  1],
+    [0, 0, 0,  0,  0,  1],    
+])
+
 I = np.array([
     [1, 0, 0,  0,  0,  0],
     [0, 1, 0,  0,  0,  0],
@@ -12,10 +21,10 @@ I = np.array([
 ])
 
 R = np.array([
-    [9, 0, 0, 0],
-    [0, 9, 0, 0],
-    [0, 0, 9, 0],
-    [0, 0, 0, 9],
+    [0.04, 0, 0, 0],
+    [0, 0.04, 0, 0],
+    [0, 0, 0.04, 0],
+    [0, 0, 0, 0.04],
 ])
 
 P = np.array([
@@ -23,7 +32,7 @@ P = np.array([
     [750, 1000, 500, 0, 0, 0],
     [250,  500, 500, 0, 0, 0],
     [0, 0, 0, 1125, 750, 250],
-    [0, 0, 0, 750, 1000, 250],
+    [0, 0, 0, 750, 1000, 500],
     [0, 0, 0, 250,  500, 500],
 ])
 
@@ -34,20 +43,35 @@ H = np.array([
     [0, 0, 0,  0,  0,  1],
 ])
 
-# H = np.array([
-#     [1, 0, 0, 0, 0, 0],
-#     [0, 0, 0, 1, 0, 0],
-# ])
+Q = np.array([
+    [1/4, 1/2, 1/2, 0,  0,  0],
+    [1/2,  1, 1,    0,  0,  0],
+    [1/2,  1, 1,    0,  0,  0],
+    [0, 0, 0,   1/4, 1/2, 1/2],
+    [0, 0, 0,   1/4,   1,   1],
+    [0, 0, 0,   1/2,   1,   1],    
+]) * (0.2 * 0.2)
 
-# R = np.array([
-#     [9, 0],
-#     [0, 9],
-# ])
+H = np.array([
+    [1, 0, 0, 0, 0, 0],
+    [0, 0, 0, 1, 0, 0],
+])
 
-K = P @ H.transpose() @ np.linalg.matrix_power(H @ P @ H.transpose(), -1)
+R = np.array([
+    [9, 0],
+    [0, 9],
+])
 
-print(K)
+for i in range(10): 
+    K = P @ H.transpose() @ np.linalg.matrix_power(H @ P @ H.transpose() + R, -1)
+    K2 = np.linalg.matrix_power(H @ P @ H.transpose() + R, -1)
 
-P = (I - K @ H) @ P @ (I - K @ H).transpose() + K @ R @ K.transpose()
+    print(K)
+    # print(K2)
+    # print("\n", H @ P @ H.transpose())
 
-print(P)
+    P = (I - K @ H) @ P @ (I - K @ H).transpose() + K @ R @ K.transpose()
+
+    # print(P)
+
+    P = F @ P @ F.transpose() + Q
