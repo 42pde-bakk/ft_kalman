@@ -32,7 +32,8 @@ include_directories(srcs)
 add_executable(tests
         tests/mainTests.cpp
         tests/MatrixTests.cpp
-        ${SOURCES})
+        ${SOURCES}
+        tests/KFFTGUChapter9.cpp)
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain)
 
 #add_executable(test tests/main.cpp ${SOURCES})
