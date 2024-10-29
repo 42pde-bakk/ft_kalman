@@ -89,3 +89,8 @@ test: all
 	kill $$PID && rm -f $(PID_FILE)
 
 -include $(DEP)
+
+catch2:
+	cmake -S . -B build
+	cmake --build build --target tests
+	./build/tests
