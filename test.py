@@ -114,48 +114,69 @@ Q = np.array([
 #     P = F @ P @ F.transpose() + Q
 
 if __name__ == '__main__':
-    df = pd.read_csv('data.csv')
+    df = pd.read_csv('out.csv')
 
-    X_hat = np.array([-0.6124080846091824,-1.2171945819828736,0,0,0,0]).transpose()
+    X_hat = np.array([
+        -0.6124080846091824, #XPos
+        0,
+        0,
+        -1.2171945819828736, #Ypos
+        0,
+        0]).transpose()
 
     old_ts = 0
 
     for i, row in df.iterrows():
-        print(row)
         delta = row['TIMESTAMP'] - old_ts
 
         old_ts = row['TIMESTAMP']
 
-        F = make_f_mat(delta / 1000)
-        Q = make_q_mat(delta / 1000)
+        velocity = calculate_velocity([
+            row['DIRECTION_X'],
+            row['DIRECTION_Y'],
+            row['DIRECTION_Z']
+        ], row['SPEED'] / 3.6)
+
+        X_hat[1] = velocity[0] * 1.0e-3
+        X_hat[4] = velocity[1] * 1.0e-3
+
+        X_hat[2] = row['ACCELERATION_X'] * 1.0e-3
+        X_hat[5] = row['ACCELERATION_Y'] * 1.0e-3
+
+        F = make_f_mat(delta)
+        Q = make_q_mat(delta)
 
         X_hat = F @ X_hat
         P = F @ P @ F.transpose() + Q
 
-        # velocity = calculate_velocity([
-        #     row['DIRECTION_X'],
-        #     row['DIRECTION_Y'],
-        #     row['DIRECTION_Z']
-        # ], row['SPEED'])
+        Z = np.array([
+            velocity[0] * 1.0e-3,
+            velocity[1] * 1.0e-3,
+            row["ACCELERATION_X"] * 1.0e-3,
+            row["ACCELERATION_Y"] * 1.0e-3,
+        ]).transpose()
 
-        # Z = np.array([
-        #     row["ACCELERATION_X"],
-        #     row["ACCELERATION_Y"],
-        #     velocity[0],
-        #     velocity[1]
-        # ]).transpose()
+        K = P @ H.transpose() @ np.linalg.matrix_power(H @ P @ H.transpose() + R, -1)
 
-        # print(Z)
+        X_hat = X_hat + K @ (Z - H @ X_hat)
 
-        # K = P @ H.transpose() @ np.linalg.inv(H @ P @ H.transpose() + R)
+        P = (I - K @ H) @ P @ (I - K @ H).transpose() + K @ R @ K.transpose()
 
-        # X_hat = X_hat + K @ (Z - H @ X_hat)
+        print(P)
 
-        # P = (I - K @ H) @ P @ (I - K @ H).transpose() + K @ R @ K.transpose()
+        real = [
+            row['TRUE_POSITION_X'], 
+            velocity[0] * 1.0e-3,
+            row['ACCELERATION_X'] * 1.0e-3,
+            row['TRUE_POSITION_Y'],
+            velocity[1] * 1.0e-3,
+            row['ACCELERATION_Y'] * 1.0e-3,
+            ]
 
-        # print(P)
-
+        print(row['TIMESTAMP'])
         print(X_hat)
+        print(real - X_hat)
+        print("")
 
-        if (int(i) >= 3):
+        if (int(i) >= 3000):
             break
