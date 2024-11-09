@@ -6,14 +6,6 @@ import pandas as pd
 
 np.set_printoptions(linewidth=100, suppress=True)
 
-# F = np.array([
-#     [1, 1, 0.5,0,  0,  0],
-#     [0, 1, 1,  0,  0,  0],
-#     [0, 0, 1,  0,  0,  0],
-#     [0, 0, 0,  1,  1,  0.5],
-#     [0, 0, 0,  0,  1,  1],
-#     [0, 0, 0,  0,  0,  1],    
-# ])
 
 def make_f_mat(delta):
     vel = delta * delta * 0.5
@@ -28,7 +20,7 @@ def make_f_mat(delta):
 
     return F
 
-def make_q_mat(delta):
+def make_q_mat(delta, F):
     Q = np.array([
         [delta ** 4 / 4, delta ** 3 / 2, delta ** 2 / 2, 0, 0, 0],
         [delta ** 3 / 2, delta ** 2    , delta         , 0, 0, 0],
@@ -38,7 +30,16 @@ def make_q_mat(delta):
         [0, 0, 0, delta ** 2 / 2, delta         , 1             ],
     ])
 
-    return Q
+    Q = np.array([
+        [0, 0, 0,  0,  0,  0],
+        [0, 0, 0,  0,  0,  0],
+        [0, 0, 1,  0,  0,  0],
+        [0, 0, 0,  0,  0,  0],
+        [0, 0, 0,  0,  0,  0],
+        [0, 0, 0,  0,  0,  1],    
+    ])
+
+    return ( F @ Q @ F.transpose() ) * 0.04
 
 def calculate_velocity(direction: List[float], speed: int):
     pitch = direction[1]
@@ -67,13 +68,22 @@ R = np.array([
     [0, 0, 0, 0.04],
 ])
 
+# P = np.array([
+#     [1125, 750, 250, 0, 0, 0],
+#     [750, 1000, 500, 0, 0, 0],
+#     [250,  500, 500, 0, 0, 0],
+#     [0, 0, 0, 1125, 750, 250],
+#     [0, 0, 0, 750, 1000, 500],
+#     [0, 0, 0, 250,  500, 500],
+# ])
+
 P = np.array([
-    [1125, 750, 250, 0, 0, 0],
-    [750, 1000, 500, 0, 0, 0],
-    [250,  500, 500, 0, 0, 0],
-    [0, 0, 0, 1125, 750, 250],
-    [0, 0, 0, 750, 1000, 500],
-    [0, 0, 0, 250,  500, 500],
+    [1, 0, 0,  0,  0,  0],
+    [0, 1, 0,  0,  0,  0],
+    [0, 0, 1,  0,  0,  0],
+    [0, 0, 0,  1,  0,  0],
+    [0, 0, 0,  0,  1,  0],
+    [0, 0, 0,  0,  0,  1],
 ])
 
 H = np.array([
@@ -137,17 +147,17 @@ if __name__ == '__main__':
             row['DIRECTION_Z']
         ], row['SPEED'] / 3.6)
 
-        X_hat[1] = velocity[0] * 1.0e-3
-        X_hat[4] = velocity[1] * 1.0e-3
+        # X_hat[1] = velocity[0] * 1.0e-3
+        # X_hat[4] = velocity[1] * 1.0e-3
 
-        X_hat[2] = row['ACCELERATION_X'] * 1.0e-3
-        X_hat[5] = row['ACCELERATION_Y'] * 1.0e-3
+        # X_hat[2] = row['ACCELERATION_X'] * 1.0e-3
+        # X_hat[5] = row['ACCELERATION_Y'] * 1.0e-3
 
         F = make_f_mat(delta)
-        Q = make_q_mat(delta)
+        Q = make_q_mat(delta, F)
 
         X_hat = F @ X_hat
-        P = F @ P @ F.transpose() + Q
+        P = ( F @ P @ F.transpose() ) + Q
 
         Z = np.array([
             velocity[0] * 1.0e-3,
@@ -161,8 +171,6 @@ if __name__ == '__main__':
         X_hat = X_hat + K @ (Z - H @ X_hat)
 
         P = (I - K @ H) @ P @ (I - K @ H).transpose() + K @ R @ K.transpose()
-
-        print(P)
 
         real = [
             row['TRUE_POSITION_X'], 
@@ -178,5 +186,5 @@ if __name__ == '__main__':
         print(real - X_hat)
         print("")
 
-        if (int(i) >= 3000):
+        if (int(i) >= 500):
             break
