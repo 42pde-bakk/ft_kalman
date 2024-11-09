@@ -77,7 +77,7 @@ def calculate_velocity(direction: List[float], speed: int):
     return [
         speed * math.cos(pitch) * math.cos(yaw),
         speed * math.cos(pitch) * math.sin(yaw),
-        speed * math.sin(pitch),
+        -speed * math.sin(pitch),
     ]
 
 
