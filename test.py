@@ -161,8 +161,8 @@ if __name__ == '__main__':
 
         Z = np.array([
             velocity[0] * 1.0e-3,
-            velocity[1] * 1.0e-3,
             row["ACCELERATION_X"] * 1.0e-3,
+            velocity[1] * 1.0e-3,
             row["ACCELERATION_Y"] * 1.0e-3,
         ]).transpose()
 
@@ -182,9 +182,10 @@ if __name__ == '__main__':
             ]
 
         print(row['TIMESTAMP'])
-        print(X_hat)
-        print(real - X_hat)
+        print("Pred:", X_hat)
+        print("Real:", real)
+        print("Diff:", real - X_hat)
         print("")
 
-        if (int(i) >= 500):
+        if (int(i) >= 5000):
             break
