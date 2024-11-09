@@ -2,12 +2,25 @@ import math
 from typing import List
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
+np.set_printoptions(linewidth=100, suppress=True, precision=12)
 
-np.set_printoptions(linewidth=100, suppress=True)
+def plot_diffs(diffs):
+    labels = ['XPos', "XAccel", "XVel", 'YPos', "YAccel", "YVel", 'ZPos', "ZAccel", "ZVel"]
 
+    for i in range(len(labels)):
+        items = []
+        for diff in diffs:
+            items.append(diff[i])
+        
+        plt.plot(items)
 
-def make_f_mat(delta):
+        plt.savefig(labels[i] + ".png")
+
+        plt.cla()
+
+def make_f_mat (delta):
     vel = delta * delta * 0.5
     F = np.array([
         [1, delta, vel,0,  0,  0],
@@ -18,28 +31,33 @@ def make_f_mat(delta):
         [0, 0, 0,  0,  0,  1],    
     ])
 
+    F = np.eye(9)
+
+    for i in range(0, 3):
+        F[i * 3][i * 3 + 1] = delta
+        F[i * 3][i * 3 + 2] = vel
+        F[i * 3 + 1][i * 3 + 2] = delta
+
     return F
 
 def make_q_mat(delta, F):
-    Q = np.array([
-        [delta ** 4 / 4, delta ** 3 / 2, delta ** 2 / 2, 0, 0, 0],
-        [delta ** 3 / 2, delta ** 2    , delta         , 0, 0, 0],
-        [delta ** 2 / 2, delta         , 1             , 0, 0, 0],
-        [0, 0, 0, delta ** 4 / 4, delta ** 3 / 2, delta ** 2 / 2],
-        [0, 0, 0, delta ** 3 / 2, delta ** 2    , delta         ],
-        [0, 0, 0, delta ** 2 / 2, delta         , 1             ],
-    ])
+    # Q1 = np.array([
+    #     [delta ** 4 / 4, delta ** 3 / 2, delta ** 2 / 2, 0, 0, 0],
+    #     [delta ** 3 / 2, delta ** 2    , delta         , 0, 0, 0],
+    #     [delta ** 2 / 2, delta         , 1             , 0, 0, 0],
+    #     [0, 0, 0, delta ** 4 / 4, delta ** 3 / 2, delta ** 2 / 2],
+    #     [0, 0, 0, delta ** 3 / 2, delta ** 2    , delta         ],
+    #     [0, 0, 0, delta ** 2 / 2, delta         , 1             ],
+    # ]) * 0.04
 
-    Q = np.array([
-        [0, 0, 0,  0,  0,  0],
-        [0, 0, 0,  0,  0,  0],
-        [0, 0, 1,  0,  0,  0],
-        [0, 0, 0,  0,  0,  0],
-        [0, 0, 0,  0,  0,  0],
-        [0, 0, 0,  0,  0,  1],    
-    ])
+    Q = np.zeros((9, 9))
 
-    return ( F @ Q @ F.transpose() ) * 0.04
+    for i in range(0, 3):
+        Q[i * 3 + 2][i * 3 + 2] = 1
+
+    Q = ( F @ Q @ F.transpose() ) * 0.08
+
+    return Q
 
 def calculate_velocity(direction: List[float], speed: int):
     pitch = direction[1]
@@ -52,87 +70,37 @@ def calculate_velocity(direction: List[float], speed: int):
     ]
 
 
-I = np.array([
-    [1, 0, 0,  0,  0,  0],
-    [0, 1, 0,  0,  0,  0],
-    [0, 0, 1,  0,  0,  0],
-    [0, 0, 0,  1,  0,  0],
-    [0, 0, 0,  0,  1,  0],
-    [0, 0, 0,  0,  0,  1],    
-])
+I = np.eye(9)
 
-R = np.array([
-    [0.04, 0, 0, 0],
-    [0, 0.04, 0, 0],
-    [0, 0, 0.04, 0],
-    [0, 0, 0, 0.04],
-])
+R = np.diag([0.4] * 6)
 
-# P = np.array([
-#     [1125, 750, 250, 0, 0, 0],
-#     [750, 1000, 500, 0, 0, 0],
-#     [250,  500, 500, 0, 0, 0],
-#     [0, 0, 0, 1125, 750, 250],
-#     [0, 0, 0, 750, 1000, 500],
-#     [0, 0, 0, 250,  500, 500],
-# ])
-
-P = np.array([
-    [1, 0, 0,  0,  0,  0],
-    [0, 1, 0,  0,  0,  0],
-    [0, 0, 1,  0,  0,  0],
-    [0, 0, 0,  1,  0,  0],
-    [0, 0, 0,  0,  1,  0],
-    [0, 0, 0,  0,  0,  1],
-])
+P = np.eye(9)
 
 H = np.array([
-    [0, 1, 0,  0,  0,  0],
-    [0, 0, 1,  0,  0,  0],
-    [0, 0, 0,  0,  1,  0],
-    [0, 0, 0,  0,  0,  1],
+    [0, 1, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 1, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 1, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 1],
 ])
 
-Q = np.array([
-    [1/4, 1/2, 1/2, 0,  0,  0],
-    [1/2,  1, 1,    0,  0,  0],
-    [1/2,  1, 1,    0,  0,  0],
-    [0, 0, 0,   1/4, 1/2, 1/2],
-    [0, 0, 0,   1/4,   1,   1],
-    [0, 0, 0,   1/2,   1,   1],    
-]) * (0.2 * 0.2)
-
-# H = np.array([
-#     [1, 0, 0, 0, 0, 0],
-#     [0, 0, 0, 1, 0, 0],
-# ])
-
-# R = np.array([
-#     [9, 0],
-#     [0, 9],
-# ])
-
-# for i in range(10): 
-#     K = P @ H.transpose() @ np.linalg.inv(H @ P @ H.transpose() + R)
-
-#     print(K)
-
-#     P = (I - K @ H) @ P @ (I - K @ H).transpose() + K @ R @ K.transpose()
-
-#     # print(P)
-
-#     P = F @ P @ F.transpose() + Q
-
 if __name__ == '__main__':
-    df = pd.read_csv('out.csv')
+    df = pd.read_csv('out_3.csv')
+
+    diffs = []
 
     X_hat = np.array([
-        -0.6124080846091824, #XPos
+        4.575474128329878, #XPos
         0,
         0,
-        -1.2171945819828736, #Ypos
+        -9.228122659741874, #Ypos
         0,
-        0]).transpose()
+        0,
+        0.5, # Zpos
+        0,
+        0
+        ]).transpose()
 
     old_ts = 0
 
@@ -147,23 +115,28 @@ if __name__ == '__main__':
             row['DIRECTION_Z']
         ], row['SPEED'] / 3.6)
 
-        # X_hat[1] = velocity[0] * 1.0e-3
-        # X_hat[4] = velocity[1] * 1.0e-3
+        if i == 0:
+            X_hat[1] = velocity[0]
+            X_hat[4] = velocity[1]
+            X_hat[7] = velocity[2]
 
-        # X_hat[2] = row['ACCELERATION_X'] * 1.0e-3
-        # X_hat[5] = row['ACCELERATION_Y'] * 1.0e-3
+            X_hat[2] = row['ACCELERATION_X']
+            X_hat[5] = row['ACCELERATION_Y']
+            X_hat[8] = row['ACCELERATION_Z']
 
-        F = make_f_mat(delta)
-        Q = make_q_mat(delta, F)
+        F = make_f_mat(delta * 1.0e-3)
+        Q = make_q_mat(delta * 1.0e-3, F)
 
         X_hat = F @ X_hat
         P = ( F @ P @ F.transpose() ) + Q
 
         Z = np.array([
-            velocity[0] * 1.0e-3,
-            row["ACCELERATION_X"] * 1.0e-3,
-            velocity[1] * 1.0e-3,
-            row["ACCELERATION_Y"] * 1.0e-3,
+            velocity[0],
+            row["ACCELERATION_X"],
+            velocity[1],
+            row["ACCELERATION_Y"],
+            velocity[2],
+            row["ACCELERATION_Z"],
         ]).transpose()
 
         K = P @ H.transpose() @ np.linalg.matrix_power(H @ P @ H.transpose() + R, -1)
@@ -174,18 +147,27 @@ if __name__ == '__main__':
 
         real = [
             row['TRUE_POSITION_X'], 
-            velocity[0] * 1.0e-3,
-            row['ACCELERATION_X'] * 1.0e-3,
+            velocity[0],
+            row['ACCELERATION_X'],
+
             row['TRUE_POSITION_Y'],
-            velocity[1] * 1.0e-3,
-            row['ACCELERATION_Y'] * 1.0e-3,
+            velocity[1],
+            row['ACCELERATION_Y'],
+
+            row['TRUE_POSITION_Z'],
+            velocity[2],
+            row['ACCELERATION_Z'],
             ]
 
-        print(row['TIMESTAMP'])
+        print(f"I: {i}, TS: {row['TIMESTAMP']}, DT: {delta}")
+        print("K:", K)
         print("Pred:", X_hat)
         print("Real:", real)
         print("Diff:", real - X_hat)
         print("")
 
-        if (int(i) >= 5000):
+        diffs.append(real - X_hat)
+
+        if (int(i) >= 50000):
             break
+    plot_diffs(diffs)
