@@ -10,17 +10,15 @@ def plot_diffs(diffs, reals, preds):
     labels = ['XPos', "XVel", "XAccel", 'YPos', "YVel", "YAccel", 'ZPos', "ZVel", "ZAccel"]
 
     for i in range(len(labels)):
-        plt.plot(diffs[i])
+        plt.plot(diffs[i], color='blue')
 
         plt.title(f"Diff {labels[i]}")
         plt.savefig("./output/diff_" + labels[i] + ".png")
 
         plt.cla()
 
-        print(len(reals[i]), len(preds[i]))
-
-        plt.plot(reals[i], color='blue')
-        plt.plot(preds[i], color='red')
+        plt.plot(reals[i], color='blue', alpha=0.5)
+        plt.plot(preds[i], color='red', alpha=0.5)
 
         plt.title(f"Traj {labels[i]}")
 
