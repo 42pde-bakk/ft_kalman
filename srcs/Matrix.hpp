@@ -19,9 +19,19 @@ class Matrix {
 
 public:
 	template <typename, size_t, size_t> friend class Matrix;
-	Matrix() = default;
+	Matrix() {
+		this->data = std::array<std::array<T, COLUMN_AMOUNT>, ROW_AMOUNT>();
+	};
 
-	Matrix(const Matrix& rhs) = default;
+	Matrix &operator=(const Matrix &rhs) {
+		this->data = rhs.data;
+
+		return *this;
+	}
+
+	Matrix(const Matrix& rhs) {
+		this->data = rhs.data;
+	}
 
 	Matrix(const std::array<std::array<T, COLUMN_AMOUNT>, ROW_AMOUNT>& outer_array) {
 		for (size_t row = 0; row < ROW_AMOUNT; row++) {

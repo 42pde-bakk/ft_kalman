@@ -31,6 +31,8 @@ Data read_initial_data(std::vector<Message> messages) {
 			case MessageType::SPEED:
 				data.set_speed(msg.get_data().front() / 3.6); // [OK] convert to m/s
 				break;
+			case MessageType::POSITION:
+				data.set_position(msg.get_data());
 			default:
 				break;
 		}
@@ -93,7 +95,7 @@ int run(Arguments &args) {
 				data.get_acceleration(0, 1),
 
 				data.get_position()[0][2],
-				-velocity[0][2],
+				velocity[0][2],
 				data.get_acceleration(0, 2),
 			});
 
@@ -119,7 +121,20 @@ int run(Arguments &args) {
 		delta = (msg_timestamp - last_timestamp_at).to_ms();
 		(void)delta;
 
-		const auto mat = filter.predict(10, input, InputType::ACCELERATION);
+		auto mat = filter.predict(10, input, InputType::ACCELERATION);
+
+		if (delta % 3000 == 0 && iterations != 0) {
+			auto state = std::array<double, 3>({
+				data.get_position()[0][0],
+				data.get_position()[0][1],
+				data.get_position()[0][2],
+			});
+
+			auto input = Matrix<double, 3, 1>(state);
+
+			mat = filter.predict(0, input, InputType::POSITION);
+		}
+
 
 		std::cout << iterations << " |\n" << filter.state << "\n|" << std::endl;
 

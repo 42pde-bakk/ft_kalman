@@ -93,7 +93,7 @@ public:
 		auto F = this->make_f_mat((double)time_step * 1.0e-3);
 		auto Q = this->generate_process_noise_covariance(F);
 
-		std::cout << "FQ" << std::endl;
+		std::cout << "FQ" << Q << std::endl;
 
 		auto P = this->P_mat;
 
@@ -106,7 +106,9 @@ public:
 			R = this->R_mat_acceleration;
 			Z = inputs;
 		} else {
-			assert(0);
+			H = this->H_mat_position;
+			R = this->R_mat_position;
+			Z = inputs;
 		}
 
 		std::cout << "HALFWAY" << std::endl;
@@ -162,97 +164,8 @@ public:
 		return (F_mat * Q_mat * F_mat.transpose()) * 0.001;
 	}
 
-	Matrix<double, Nx, Nx> get_state_transition_matrix(double time_step) {
-		auto mat = Matrix<double, Nx, Nx>::template identity<Nx>();
-		for (size_t i = 0; i < 6; i++) {
-			mat[i][i + 3] = time_step;
-		}
-		for (size_t i = 0; i < 3; i++) {
-			mat[i][i + 6] = 0.5 * time_step * time_step;
-		}
-		return (mat);
-	}
-
-	MeasurementVector calculate_measurement_vector(const InputVector &inputs) {
-		// z_n = Hx_n + v_n
-
-		auto z_n = this->H_mat * inputs;
-
-		return z_n;
-	}
-
-	KalmanGain calculate_kalman_gain() {
-		// Kn = Pn,n-1HT(HPn,n-1HT + Rn)^-1
-		KalmanGain k_n = 
-			this->P_mat * this->H_mat.transpose() * 
-			(this->H_mat * this->P_mat * this->H_mat.transpose() + this->R_mat).pow(-1);
-
-		if (k_n.max() > 1 || k_n.min() < 0) {
-			std::cout << "_--=--=-=-=-=-=-==-" << std::endl;
-			std::cout << this->P_mat * this->H_mat.transpose() << std::endl;
-			std::cout << (this->H_mat * this->P_mat * this->H_mat.transpose() + this->R_mat) << std::endl;
-			std::cout << (this->H_mat * this->P_mat * this->H_mat.transpose() + this->R_mat).pow(-1) << std::endl;
-			std::cout << k_n << std::endl;
-
-			assert(false);
-		}
-
-		// auto k_n = this->P_mat * this->H_mat.transpose();
-
-		// std::cout << "S1\n" << k_n << std::endl;
-
-		// auto im = (this->H_mat * this->P_mat * this->H_mat.transpose() + this->R_mat);
-
-		// std::cout << "SIM\n" << im << std::endl;
-
-		// k_n = k_n * im.pow(-1);
-
-		// std::cout << "S2\n" << k_n << std::endl;
-
-		// exit(1);
-
-
-		return k_n;
-	}
-
-	StateVector update_state_matrix(KalmanGain &kalman, StateVector x_prev, MeasurementVector z_n) {
-		// x_n,n = x_n,n-1 + Kn(Zn - Hx_n,n-1)
-
-		auto x_n_n = x_prev + kalman * (z_n - this->H_mat * x_prev);
-
-		return x_n_n;
-	}
-
-	EstimateCovarianceMatrix update_covariance_matrix(KalmanGain &kalman) {
-		// P_n,n = (I - KnH)P_n,n-1(I - KnH)T + KnRnKnT
-
-		std::cout << "1: " << (this->identity - kalman * this->H_mat) << std::endl;
-		std::cout << "2: " << this->P_mat << std::endl;
-		std::cout << "3: " << (this->identity - kalman * this->H_mat).transpose() << std::endl;
-		std::cout << "4: " << kalman * this->R_mat * kalman.transpose() << std::endl;
-
-		auto p_n_n =
-				(this->identity - kalman * this->H_mat) *
-				this->P_mat *
-				(this->identity - kalman * this->H_mat).transpose() +
-				kalman * this->R_mat * kalman.transpose();
-
-		std::cout << "5: " << p_n_n << std::endl;
-
-		return p_n_n;
-	}
-
 	void set_state(std::array<double, Nx> &state) {
 		this->state = Matrix<double, Nx, 1>(state);
-	}
-
-	Matrix<double, Nx, 1> get_initial_process_noise() {
-		const Vector3d gps_noise(std::array<double, 3>({0.1, 0.1, 0.1}));
-		const Vector3d acceleration_noise(std::array<double, 3>({0.001, 0.001, 0.001}));
-		const Vector3d gyroscope_noise(std::array<double, 3>({0.01, 0.01, 0.01}));
-
-		auto x = gps_noise.vstack(acceleration_noise).vstack(gyroscope_noise);
-		return (x);
 	}
 
 	double get_current_speed() {
