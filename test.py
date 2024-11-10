@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-np.set_printoptions(linewidth=100, suppress=True, precision=12)
+np.set_printoptions(linewidth=150, suppress=True, precision=12)
 
 
 def plot_diffs(diffs, reals, preds):
@@ -92,11 +92,11 @@ P = np.eye(9)
 H = {
     "acceleration": np.array(
         [
-            # [0, 1, 0, 0, 0, 0, 0, 0, 0],
+           # [0, 1, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 1, 0, 0, 0, 0, 0, 0],
-            # [0, 0, 0, 0, 1, 0, 0, 0, 0],
+           # [0, 0, 0, 0, 1, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 1, 0, 0, 0],
-            # [0, 0, 0, 0, 0, 0, 0, 1, 0],
+           # [0, 0, 0, 0, 0, 0, 0, 1, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 1],
         ]
     ),
@@ -108,19 +108,6 @@ H = {
         ]
     ),
 }
-
-# X_hat = np.array([
-#     4.575474128329878, #XPos
-#     0,
-#     0,
-#     -9.228122659741874, #Ypos
-#     0,
-#     0,
-#     0.5, # Zpos
-#     0,
-#     0
-#     ]).transpose()
-
 
 def update(H: np.ndarray, R: np.ndarray, Z: np.ndarray, dt: int):
     global X_hat, P
@@ -185,13 +172,12 @@ if __name__ == "__main__":
             X_hat[5] = row["ACCELERATION_Y"]
             X_hat[8] = row["ACCELERATION_Z"]
 
+            print("XXX", X_hat)
+
         Z = np.array(
             [
-                # velocity[0],
                 row["ACCELERATION_X"],
-                # velocity[1],
                 row["ACCELERATION_Y"],
-                # velocity[2],
                 row["ACCELERATION_Z"],
             ]
         ).transpose()
@@ -223,14 +209,14 @@ if __name__ == "__main__":
             row["ACCELERATION_Z"],
         ]
 
-        # print(f"I: {i}, TS: {row['TIMESTAMP']}, DT: {delta}")
-        # print("Pred:", X_hat)
-        # print("Real:", real)
-        # print("Diff:", real - X_hat)
-        # print("")
+        print(f"I: {i}, TS: {row['TIMESTAMP']}, DT: {delta}")
+        print("Pred:", X_hat)
+        print("Real:", real)
+        print("Diff:", real - X_hat)
+        print("")
 
         total_diff = (
-            abs(real[0] - X_hat[0]) + abs(real[1] - X_hat[1]) + abs(real[2] - X_hat[2])
+            abs(real[0] - X_hat[0]) + abs(real[3] - X_hat[3]) + abs(real[6] - X_hat[6])
         )
 
         if total_diff > max_diff:
@@ -243,7 +229,7 @@ if __name__ == "__main__":
             reals[l].append(real[l])
             preds[l].append(X_hat[l])
 
-        if int(i) >= 30_000:
+        if int(i) >= 1000000:
             break
 
     print("MAX: ", max_diff)
