@@ -22,13 +22,18 @@
 #define GYROSCOPE_NOISE 0.01
 #define ACCELEROMETER_NOISE 0.001
 
+enum InputType {
+	ACCELERATION,
+	POSITION
+};
+
 template<size_t Nx, size_t Nz, size_t Nu>
 class KalmanFilter {
 public:
 	using StateVector = Matrix<double, Nx, 1>;
 	using MeasurementVector = Matrix<double, Nz, 1>;
 	using StateTransitionMatrix = Matrix<double, Nx, Nx>;
-	using InputVector = Matrix<double, Nu, 1>;
+	using InputVector = Matrix<double, Nz, 1>;
 	using ControlMatrix = Matrix<double, Nx, Nu>;
 	using EstimateCovarianceMatrix = Matrix<double, Nx, Nx>;
 	using ProcessNoiseCovariance = Matrix<double, Nx, Nx>;
@@ -38,12 +43,26 @@ public:
 	using ObservationMatrix = Matrix<double, Nz, Nx>;
 	using KalmanGain = Matrix<double, Nx, Nz>;
 
-private:
 	Vector<double, Nx> state{};
+private:
 
-	EstimateCovarianceMatrix P_mat;
-	ObservationMatrix H_mat;
-	MeasurementCovariance R_mat;
+	EstimateCovarianceMatrix P_mat = EstimateCovarianceMatrix::template identity<Nx>();
+
+	ObservationMatrix H_mat_acceleration = ObservationMatrix({
+		std::array<double, Nx>({ 0, 0, 1, 0, 0, 0, 0, 0, 0 }),
+		std::array<double, Nx>({ 0, 0, 0, 0, 0, 1, 0, 0, 0 }),
+		std::array<double, Nx>({ 0, 0, 0, 0, 0, 0, 0, 0, 1 }),
+	});
+
+	ObservationMatrix H_mat_position = ObservationMatrix({
+		std::array<double, Nx>({ 1, 0, 0, 0, 0, 0, 0, 0, 0 }),
+		std::array<double, Nx>({ 0, 0, 0, 1, 0, 0, 0, 0, 0 }),
+		std::array<double, Nx>({ 0, 0, 0, 0, 0, 0, 1, 0, 0 }),
+	});
+
+	MeasurementCovariance R_mat_acceleration = MeasurementCovariance::template diag<Nz>(0.002);
+	MeasurementCovariance R_mat_position = MeasurementCovariance::template diag<Nz>(0.02);
+
 	Matrix<double, Nx, Nx> identity = Matrix<double, Nx, Nx>::template identity<Nx>();
 
 public:
@@ -51,126 +70,96 @@ public:
 		this->state = Matrix<double, Nx, 1>();
 	}
 
-	void set_P_mat(const EstimateCovarianceMatrix &P_mat) {
-		this->P_mat = P_mat;
+	StateTransitionMatrix make_f_mat(double delta) {
+		auto acsq = 0.5 * delta * delta;
+
+		StateTransitionMatrix F = StateTransitionMatrix::template identity<Nx>();
+
+		for (size_t i = 0; i < 3; i++)
+		{
+			F[i * 3][i * 3 + 1] = delta;
+			F[i * 3][i * 3 + 2] = acsq;
+			F[i * 3 + 1][i * 3 + 2] = delta;
+		}
+		
+		return F;
 	}
 
-	void set_H_mat(const ObservationMatrix &H_mat) {
-		this->H_mat = H_mat;
-	}
-
-	void set_R_mat(const MeasurementCovariance &R_mat) {
-		this->R_mat = R_mat;
-	}
-
-	// Vector3d predict(size_t time_step, const InputVector &inputs);
-
-	// ///
-
-	// EstimateCovarianceMatrix extrapolate_covariance(const StateTransitionMatrix F_mat, const EstimateCovarianceMatrix P_mat);
-
-	// MeasurementVector calculate_measurement_vector(const InputVector &inputs);
-
-	// KalmanGain calculate_kalman_gain();
-
-	// StateVector update_state_matrix(KalmanGain &kalman, StateVector x_prev, MeasurementVector z_n);
-
-	// EstimateCovarianceMatrix update_covariance_matrix(KalmanGain &kalman);
-
-	///
-
-	Vector3d predict(size_t time_step, const InputVector& inputs) {
+	Vector3d predict(size_t time_step, const InputVector& inputs, InputType type) {
 		Vector3d predicted_pos;
 
-		auto time = (double)time_step / 1000;
+		std::cout << "START" << std::endl;
 
-		// acceleration squared.
-		auto acsq = 0.5 * time * time;
+		auto F = this->make_f_mat((double)time_step * 1.0e-3);
+		auto Q = this->generate_process_noise_covariance(F);
 
-		auto F_mat = StateTransitionMatrix({
-			std::array<double, Nx>({ 1  , 0  , 0   , time, 0   , 0   , acsq, 0   , 0}),
-			std::array<double, Nx>({ 0  , 1  , 0   , 0   , time, 0   , 0   , acsq, 0}),
-			std::array<double, Nx>({ 0  , 0  , 1   , 0   , 0   , time, 0   , 0   , acsq}),
-			std::array<double, Nx>({ 0  , 0  , 0   , 1	 , 0   , 0   , time, 0   , 0}),
-			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 1   , 0   , 0   , time, 0}),
-			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 1   , 0   , 0   , time}),
-			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 1   , 0   , 0}),
-			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0}),
-			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
-		});
+		std::cout << "FQ" << std::endl;
 
-		this->state = F_mat * this->state;
+		auto P = this->P_mat;
 
-		std::cout << "STATE\n" << this->state << std::endl;
+		ObservationMatrix H;
+		MeasurementCovariance R;
+		MeasurementVector Z;
 
-		std::cout << "F_MAT\n" << F_mat << std::endl;
+		if (type == InputType::ACCELERATION) {
+			H = this->H_mat_acceleration;
+			R = this->R_mat_acceleration;
+			Z = inputs;
+		} else {
+			assert(0);
+		}
 
-		auto Q_mat = this->generate_process_noise_covariance(F_mat);
+		std::cout << "HALFWAY" << std::endl;
 
-		std::cout << "Q_MAT\n" << Q_mat << std::endl;
+		auto X_hat = F * this->state;
 
-		this->P_mat = this->extrapolate_covariance(F_mat, this->P_mat, Q_mat);
+		P = (F * P * F.transpose()) + Q;
 
-		std::cout << "P_MAT\n" << this->P_mat << std::endl;
+		std::cout << "1: " << P << std::endl;
 
-		auto measurement = this->calculate_measurement_vector(inputs);
+		auto K = P * H.transpose() * (H * P * H.transpose() + R).pow(-1);
 
-		std::cout << "MEASUREMENT\n" << measurement << std::endl;
+		std::cout << "2: " << K << std::endl;
 
-		auto kalman = this->calculate_kalman_gain();
+		X_hat = X_hat + K * (Z - H * X_hat);
 
-		std::cout << "KALMAN GAIN\n" << kalman << std::endl;
+		std::cout << "3: " << X_hat << std::endl;
 
-		auto updated_state = this->update_state_matrix(kalman, this->state, measurement);
+		P = ( this->identity - K * H ) * P * (this->identity - K * H).transpose() + K * R * K.transpose();
 
-		std::cout << "UPDATED\n" << updated_state << std::endl;
+		std::cout << "4: " << P << std::endl;
 
-		this->state = updated_state;
 
-		auto updated_covariance = this->update_covariance_matrix(kalman);
-
-		std::cout << "COV\n" << updated_covariance << std::endl;
-
-		this->P_mat = updated_covariance;
+		this->state = X_hat;
+		this->P_mat = P;
 
 		predicted_pos[0][0] = this->state[0][0];
-		predicted_pos[1][0] = this->state[1][0];
-		predicted_pos[2][0] = this->state[2][0];
+		predicted_pos[1][0] = this->state[3][0];
+		predicted_pos[2][0] = this->state[6][0];
 
-	//	auto predicted_mu = A * mu_t + B * u_t;
-	//	auto predicted_sigma = A * sigma_t * A.transpose() + Q;
 		return predicted_pos;
-
-	//	x = x0 + vx0 * Δt + 1/2 * ax * Δt^2
-	//	y = y0 + vy0 * Δt + 1/2 * ay * Δt^2
-	//	z = z0 + vz0 * Δt + 1/2 * az * Δt^2
 	}
 
 	[[nodiscard]] const Vector<double, Nx>& get_state() const {
 		return (this->state);
 	}
 
-	Matrix<double, Nx, Nx> extrapolate_covariance(const StateTransitionMatrix &F_mat, const EstimateCovarianceMatrix &P_mat, const ProcessNoiseCovariance &Q_mat) {
-		// Pn+1,n=FPn,nFT
-		auto P_n1_mat = F_mat * P_mat * F_mat.transpose() + Q_mat;
 
-		return P_n1_mat;
-	}
 
 	ProcessNoiseCovariance generate_process_noise_covariance(const StateTransitionMatrix &F_mat) {
 		auto Q_mat = ProcessNoiseCovariance({
 			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+			std::array<double, Nx>({ 0  , 0  , 1   , 0   , 0   , 0   , 0   , 0   , 0}),
+			std::array<double, Nx>({ 0  , 0  , 0   , 0	 , 0   , 0   , 0   , 0   , 0}),
 			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-			std::array<double, Nx>({ 0  , 0  , 0   , 0	, 0   , 0   , 0   , 0   , 0}),
+			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 1   , 0   , 0   , 0}),
 			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
 			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
-			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 1   , 0   , 0}),
-			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 1   , 0}),
 			std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 1}),
 		});
 
-		return F_mat * Q_mat * F_mat.transpose();
+		return (F_mat * Q_mat * F_mat.transpose()) * 0.001;
 	}
 
 	Matrix<double, Nx, Nx> get_state_transition_matrix(double time_step) {

@@ -118,9 +118,20 @@ public:
 
 	template<size_t SIZE>
 	static Matrix<double, SIZE, SIZE>	identity() {
-		Matrix<double, SIZE, SIZE> out;
+		auto out = Matrix<double, SIZE, SIZE>();
+
 		for (size_t i = 0; i < SIZE; i++) {
 			out[i][i] = 1;
+		}
+		return (out);
+	}
+
+	template<size_t SIZE>
+	static Matrix<double, SIZE, SIZE>	diag(double val) {
+		auto out = Matrix<double, SIZE, SIZE>();
+
+		for (size_t i = 0; i < SIZE; i++) {
+			out[i][i] = val;
 		}
 		return (out);
 	}
