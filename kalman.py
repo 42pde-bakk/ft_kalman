@@ -8,6 +8,7 @@ from udp import *
 
 np.set_printoptions(linewidth=150, suppress=True, precision=12)
 
+
 def plot_diffs(diffs, reals, preds):
     labels = [
         "XPos",
@@ -74,21 +75,38 @@ def make_q_mat(F):
 
 
 def calculate_velocity(direction: List[float], speed: int):
-    pitch = direction[0]
-    yaw = direction[1]
+    pitch = direction[1]
+    yaw = direction[2]
 
     return [
         speed * math.cos(pitch) * math.cos(yaw),
         speed * math.cos(pitch) * math.sin(yaw),
-        -speed * math.sin(pitch),
+        speed * math.sin(pitch),
     ]
 
 
 I = np.eye(9)
 
-R = {"acceleration": np.diag([0.0001] * 3), "position": np.diag([0.025] * 3)}
+R = {"acceleration": np.diag([0.0001] * 3), "position": np.diag([0.005] * 3)}
 
-P = np.diag([0, 0.0005, 0.0001] * 3)
+Ppos = 0
+Pvel = 0.00005
+Pacl = 0.0001
+Pmul = 0
+
+P = np.array(
+    [
+        [Ppos, 0, 0, 0, 0, 0, 0, 0, 0],
+        [0, Pvel, Pmul, 0, 0, 0, 0, 0, 0],
+        [0, Pmul, Pacl, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, Ppos, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, Pvel, Pmul, 0, 0, 0],
+        [0, 0, 0, 0, Pmul, Pacl, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, Ppos, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, Pvel, Pmul],
+        [0, 0, 0, 0, 0, 0, 0, Pmul, Pacl],
+    ]
+)
 
 H = {
     "acceleration": np.array(
@@ -128,7 +146,8 @@ def update(H: np.ndarray, R: np.ndarray, Z: np.ndarray, dt: int):
 
     P = (I - K @ H) @ P @ (I - K @ H).transpose() + K @ R @ K.transpose()
 
-    return (K)
+    return K
+
 
 def run_udp(port):
     global X_hat
@@ -187,7 +206,9 @@ def run_udp(port):
 
             update(H["position"], R["position"], Z, 0)
 
-        submit(serverSocket, port, f"{X_hat[0].item()} {X_hat[3].item()} {X_hat[6].item()}")
+        submit(
+            serverSocket, port, f"{X_hat[0].item()} {X_hat[3].item()} {X_hat[6].item()}"
+        )
 
         timestamp += 10
 
@@ -196,12 +217,8 @@ def run_udp(port):
         if int(i) >= 539996:
             break
 
-if __name__ == "__main__":
-    run_udp(int(sys.argv[1]))
-    exit()
-
-    file = "out"
-
+def run(file):
+    global X_hat
     df = pd.read_csv(f"{file}.csv")
 
     pos_df = pd.read_csv(f"{file}_position.csv")
@@ -272,9 +289,7 @@ if __name__ == "__main__":
 
             K_pos = update(H["position"], R["position"], Z, 000)
 
-            print(P)
-
-            print(K_pos)
+            # print(K_pos)
             # exit();
 
         real = [
@@ -290,7 +305,7 @@ if __name__ == "__main__":
         ]
 
         # print(f"I: {i}, TS: {row['TIMESTAMP']}, DT: {delta}")
-        # print("K:", K)
+        # print("P:", P)
         # print("Pred:", X_hat)
         # print("Real:", real)
         # print("Diff:", real - X_hat)
@@ -312,8 +327,18 @@ if __name__ == "__main__":
 
         timestamp += 10
 
-        if int(i) >= 10000000:
+        if int(i) >= 400000:
             break
 
-    print("MAX: ", max_diff)
-    plot_diffs(diffs, reals, preds)
+    return (max_diff, diffs, reals, preds)
+if __name__ == "__main__":
+    if (len(sys.argv) == 2):
+        run_udp(int(sys.argv[1]))
+        exit()
+
+    files = ["out", "out_2", "out_3", "out_33"]
+
+    for file in files:
+        max_diff, diffs, reals, preds = run(file)
+        print(f" {file}, MAX: ", max_diff)
+        plot_diffs(diffs, reals, preds)
