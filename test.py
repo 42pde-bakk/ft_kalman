@@ -9,6 +9,7 @@ avg_max_diff = []
 total_ok = 0
 total_ko = 0
 
+
 def run_thread(idx):
     global avg_max_diff, total_ko, total_ok
     print(f"Thread {idx} starting.")
@@ -17,9 +18,18 @@ def run_thread(idx):
         i = ids.pop()
 
         server = subprocess.Popen(
-            ["./imu-sensor-stream-linux", "--delta", "-d", "10", "-s", str(i), "-p", str(4242 + idx)],
+            [
+                "./imu-sensor-stream-linux",
+                "--delta",
+                "-d",
+                "10",
+                "-s",
+                str(i),
+                "-p",
+                str(4242 + idx),
+            ],
             stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL
+            stderr=subprocess.DEVNULL,
         )
 
         sleep(1)
@@ -28,21 +38,21 @@ def run_thread(idx):
             ["python3", "kalman.py", str(4242 + idx)], stdout=subprocess.DEVNULL
         )
 
-        output = str(server.stdout.read(), 'utf-8').split('\n')[2:-1]
+        output = str(server.stdout.read(), "utf-8").split("\n")[2:-1]
         result = server.wait()
         client.kill()
 
         max_diff = -inf
 
         for line in output:
-            splitted = line.split(',')
+            splitted = line.split(",")
             x = float(splitted[0][3:])
             y = float(splitted[1][4:])
             z = float(splitted[2][4:])
 
             diff = abs(x) + abs(y) + abs(z)
 
-            if (diff > max_diff):
+            if diff > max_diff:
                 max_diff = diff
 
         if result != 0:
