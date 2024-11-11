@@ -3,6 +3,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from udp import *
 
 np.set_printoptions(linewidth=150, suppress=True, precision=12)
 
@@ -79,24 +80,24 @@ def calculate_velocity(direction: List[float], speed: int):
     return [
         speed * math.cos(pitch) * math.cos(yaw),
         speed * math.cos(pitch) * math.sin(yaw),
-        -speed * math.sin(pitch),
+        speed * math.sin(pitch),
     ]
 
 
 I = np.eye(9)
 
-R = {"acceleration": np.diag([0.002] * 3), "position": np.diag([0.02] * 3)}
+R = {"acceleration": np.diag([0.004] * 3), "position": np.diag([0.075] * 3)}
 
-P = np.eye(9)
+P = np.diag([200] * 9)
 
 H = {
     "acceleration": np.array(
         [
-           # [0, 1, 0, 0, 0, 0, 0, 0, 0],
+            # [0, 1, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 1, 0, 0, 0, 0, 0, 0],
-           # [0, 0, 0, 0, 1, 0, 0, 0, 0],
+            # [0, 0, 0, 0, 1, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 1, 0, 0, 0],
-           # [0, 0, 0, 0, 0, 0, 0, 1, 0],
+            # [0, 0, 0, 0, 0, 0, 0, 1, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 1],
         ]
     ),
@@ -108,6 +109,7 @@ H = {
         ]
     ),
 }
+
 
 def update(H: np.ndarray, R: np.ndarray, Z: np.ndarray, dt: int):
     global X_hat, P
@@ -128,6 +130,9 @@ def update(H: np.ndarray, R: np.ndarray, Z: np.ndarray, dt: int):
 if __name__ == "__main__":
     df = pd.read_csv("out_3.csv")
 
+    connect(serverSocket)
+    initial_data = init(serverSocket)
+
     pos_df = pd.read_csv("out_3_position.csv")
     pos_iter = 0
 
@@ -137,59 +142,62 @@ if __name__ == "__main__":
 
     max_diff = -math.inf
 
+    velocity = calculate_velocity(
+        [
+            initial_data["DIRECTION"][0],
+            initial_data["DIRECTION"][1],
+            initial_data["DIRECTION"][2],
+        ],
+        initial_data["SPEED"][0] / 3.6,
+    )
+
     X_hat = np.array(
         [
-            4.575474128329878,  # XPos
-            0,
-            0,
-            -9.228122659741874,  # Ypos
-            0,
-            0,
-            0.5,  # Zpos
-            0,
-            0,
+            initial_data["TRUE POSITION"][0],  # XPos
+            velocity[0],
+            initial_data["ACCELERATION"][0],
+            initial_data["TRUE POSITION"][1],  # Ypos
+            velocity[1],
+            initial_data["ACCELERATION"][2],
+            initial_data["TRUE POSITION"][2],  # Zpos
+            velocity[2],
+            initial_data["ACCELERATION"][2],
         ]
     ).transpose()
 
+    submit(serverSocket, f"{X_hat[0].item()} {X_hat[3].item()} {X_hat[6].item()}")
+
     old_ts = 0
+    timestamp = 10
 
-    for i, row in df.iterrows():
-        delta = row["TIMESTAMP"] - old_ts
+    for i in range(1_000_000):
+        input = receive(serverSocket)
 
-        old_ts = row["TIMESTAMP"]
+        # delta = row["TIMESTAMP"] - old_ts
 
-        velocity = calculate_velocity(
-            [row["DIRECTION_X"], row["DIRECTION_Y"], row["DIRECTION_Z"]],
-            row["SPEED"] / 3.6,
-        )
+        # old_ts = row["TIMESTAMP"]
 
-        if i == 0:
-            X_hat[1] = velocity[0]
-            X_hat[4] = velocity[1]
-            X_hat[7] = velocity[2]
-
-            X_hat[2] = row["ACCELERATION_X"]
-            X_hat[5] = row["ACCELERATION_Y"]
-            X_hat[8] = row["ACCELERATION_Z"]
-
-            print("XXX", X_hat)
+        # velocity = calculate_velocity(
+        #     [row["DIRECTION_X"], row["DIRECTION_Y"], row["DIRECTION_Z"]],
+        #     row["SPEED"] / 3.6,
+        # )
 
         Z = np.array(
             [
-                row["ACCELERATION_X"],
-                row["ACCELERATION_Y"],
-                row["ACCELERATION_Z"],
+                input["ACCELERATION"][0],
+                input["ACCELERATION"][1],
+                input["ACCELERATION"][2],
             ]
         ).transpose()
 
         update(H["acceleration"], R["acceleration"], Z, 10)
 
-        if i != 0 and row["TIMESTAMP"] % 3000 == 0:
+        if i != 0 and (timestamp) % 3000 == 0:
             Z = np.array(
                 [
-                    pos_df.iloc[pos_iter]["POSITION_X"],
-                    pos_df.iloc[pos_iter]["POSITION_Y"],
-                    pos_df.iloc[pos_iter]["POSITION_Z"],
+                    input["POSITION"][0],
+                    input["POSITION"][1],
+                    input["POSITION"][2],
                 ]
             )
 
@@ -197,40 +205,45 @@ if __name__ == "__main__":
 
             update(H["position"], R["position"], Z, 0)
 
-        real = [
-            row["TRUE_POSITION_X"],
-            velocity[0],
-            row["ACCELERATION_X"],
-            row["TRUE_POSITION_Y"],
-            velocity[1],
-            row["ACCELERATION_Y"],
-            row["TRUE_POSITION_Z"],
-            velocity[2],
-            row["ACCELERATION_Z"],
-        ]
+        # real = [
+        #     row["TRUE_POSITION_X"],
+        #     velocity[0],
+        #     row["ACCELERATION_X"],
+        #     row["TRUE_POSITION_Y"],
+        #     velocity[1],
+        #     row["ACCELERATION_Y"],
+        #     row["TRUE_POSITION_Z"],
+        #     velocity[2],
+        #     row["ACCELERATION_Z"],
+        # ]
 
-        print(f"I: {i}, TS: {row['TIMESTAMP']}, DT: {delta}")
-        print("Pred:", X_hat)
-        print("Real:", real)
-        print("Diff:", real - X_hat)
-        print("")
+        # print(f"I: {i}, TS: {row['TIMESTAMP']}, DT: {delta}")
+        # print("Pred:", X_hat)
+        # print("Real:", real)
+        # print("Diff:", real - X_hat)
+        # print("")
 
-        total_diff = (
-            abs(real[0] - X_hat[0]) + abs(real[3] - X_hat[3]) + abs(real[6] - X_hat[6])
-        )
+        # total_diff = (
+        #     abs(real[0] - X_hat[0]) + abs(real[3] - X_hat[3]) + abs(real[6] - X_hat[6])
+        # )
 
-        if total_diff > max_diff:
-            max_diff = total_diff
+        # if total_diff > max_diff:
+        #     max_diff = total_diff
 
-        diffs.append(real - X_hat)
+        submit(serverSocket, f"{X_hat[0].item()} {X_hat[3].item()} {X_hat[6].item()}")
 
-        for l in range(len(real)):
-            diffs[l].append(real[l] - X_hat[l])
-            reals[l].append(real[l])
-            preds[l].append(X_hat[l])
+        # diffs.append(real - X_hat)
+
+        # for l in range(len(real)):
+        #     diffs[l].append(real[l] - X_hat[l])
+        #     reals[l].append(real[l])
+        #     preds[l].append(X_hat[l])
+
+        timestamp += 10
 
         if int(i) >= 1000000:
             break
 
-    print("MAX: ", max_diff)
-    plot_diffs(diffs, reals, preds)
+    print("DONE!!!")
+    # print("MAX: ", max_diff)
+    # plot_diffs(diffs, reals, preds)
