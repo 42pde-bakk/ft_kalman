@@ -3,13 +3,13 @@ from socket import *
 serverSocket = socket(AF_INET, SOCK_DGRAM)
 
 
-def connect(serverSocket):
-    serverSocket.bind(("", 1212))
+def connect(serverSocket, port):
+    serverSocket.bind(("", 1212 + port))
     return serverSocket
 
 
-def init(serverSocket):
-    serverSocket.sendto(bytes("READY", "utf-8"), ("", 4242))
+def init(serverSocket, port):
+    serverSocket.sendto(bytes("READY", "utf-8"), ("", port))
 
     for i in range(0, 2):
         message, address = serverSocket.recvfrom(1024)
@@ -37,9 +37,9 @@ def init(serverSocket):
     return rv
 
 
-def submit(serverSocket, pos):
+def submit(serverSocket, port, pos):
     print(pos)
-    serverSocket.sendto(bytes(pos, "utf-8"), ("", 4242))
+    serverSocket.sendto(bytes(pos, "utf-8"), ("", port))
 
 
 def receive(serverSocket):

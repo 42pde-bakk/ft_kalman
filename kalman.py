@@ -1,4 +1,5 @@
 import math
+import sys
 from typing import List
 import numpy as np
 import pandas as pd
@@ -85,9 +86,9 @@ def calculate_velocity(direction: List[float], speed: int):
 
 I = np.eye(9)
 
-R = {"acceleration": np.diag([0.004] * 3), "position": np.diag([0.1] * 3)}
+R = {"acceleration": np.diag([0.0001] * 3), "position": np.diag([0.025] * 3)}
 
-P = np.diag([0, 0.04, 0] * 3)
+P = np.diag([0, 0.0005, 0.0001] * 3)
 
 H = {
     "acceleration": np.array(
@@ -129,11 +130,11 @@ def update(H: np.ndarray, R: np.ndarray, Z: np.ndarray, dt: int):
 
     return (K)
 
-def run_udp():
+def run_udp(port):
     global X_hat
 
-    connect(serverSocket)
-    initial_data = init(serverSocket)
+    connect(serverSocket, port)
+    initial_data = init(serverSocket, port)
 
     velocity = calculate_velocity(
         [
@@ -158,7 +159,7 @@ def run_udp():
         ]
     ).transpose()
 
-    submit(serverSocket, f"{X_hat[0].item()} {X_hat[3].item()} {X_hat[6].item()}")
+    submit(serverSocket, port, f"{X_hat[0].item()} {X_hat[3].item()} {X_hat[6].item()}")
 
     timestamp = 10
 
@@ -186,7 +187,7 @@ def run_udp():
 
             update(H["position"], R["position"], Z, 0)
 
-        submit(serverSocket, f"{X_hat[0].item()} {X_hat[3].item()} {X_hat[6].item()}")
+        submit(serverSocket, port, f"{X_hat[0].item()} {X_hat[3].item()} {X_hat[6].item()}")
 
         timestamp += 10
 
@@ -196,10 +197,10 @@ def run_udp():
             break
 
 if __name__ == "__main__":
-    run_udp()
+    run_udp(int(sys.argv[1]))
     exit()
 
-    file = "out_2"
+    file = "out"
 
     df = pd.read_csv(f"{file}.csv")
 
