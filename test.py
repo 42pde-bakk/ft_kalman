@@ -87,7 +87,7 @@ I = np.eye(9)
 
 R = {"acceleration": np.diag([0.004] * 3), "position": np.diag([0.1] * 3)}
 
-P = np.diag([0] * 9)
+P = np.diag([0, 0.04, 0] * 3)
 
 H = {
     "acceleration": np.array(
@@ -190,14 +190,16 @@ def run_udp():
 
         timestamp += 10
 
-        if int(i) >= 1000000:
+        print(i)
+
+        if int(i) >= 539996:
             break
 
 if __name__ == "__main__":
     run_udp()
     exit()
 
-    file = "out"
+    file = "out_2"
 
     df = pd.read_csv(f"{file}.csv")
 
