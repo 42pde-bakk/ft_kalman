@@ -50,11 +50,11 @@ Vector3d Data::calculate_velocity() const {
 	double pitch = this->direction[1][0];
 	double yaw = this->direction[2][0];
 
-	Vector3d velocity(std::array<double, 3>({
+	Vector3d velocity({
 		this->speed * std::cos(pitch) * std::cos(yaw),
 		this->speed * std::cos(pitch) * std::sin(yaw),
 		-this->speed * std::sin(pitch)
-	}));
+	});
 
 	return velocity;
 }

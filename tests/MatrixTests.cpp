@@ -18,11 +18,10 @@ TEST_CASE("Matrix default constructor", "[Matrix]") {
 }
 
 TEST_CASE("Matrix constructor from std::array", "[Matrix]") {
-	constexpr std::array<std::array<double, 2>, 2> arr = {{
+	const Matrix<double, 2, 2> mat({
 		{1.0, 2.0},
 		{3.0, 4.0}
-	}};
-	const Matrix<double, 2, 2> mat(arr);
+	});
 
 	REQUIRE_THAT(mat[0][0], Catch::Matchers::WithinAbs(1.0, EPSILON));
 	REQUIRE_THAT(mat[0][1], Catch::Matchers::WithinAbs(2.0, EPSILON));
@@ -50,16 +49,14 @@ TEST_CASE("Matrix multiplication order", "[Matrix]") {
 }
 
 TEST_CASE("Matrix multiplication", "[Matrix]") {
-	constexpr std::array<std::array<double, 2>, 2> lhs_arr = {{
+	const Matrix<double, 2, 2> lhs({
 		{1.0, 2.0},
 		{3.0, 4.0}
-	}};
-	constexpr std::array<std::array<double, 2>, 2> rhs_arr = {{
+	});
+	const Matrix<double, 2, 2> rhs({
 		{5.0, 6.0},
 		{7.0, 8.0}
-	}};
-	const Matrix<double, 2, 2> lhs(lhs_arr);
-	const Matrix<double, 2, 2> rhs(rhs_arr);
+	});
 
 	const Matrix<double, 2, 2> result = lhs * rhs;
 
@@ -80,11 +77,10 @@ TEST_CASE("Matrix scalar multiplication", "[Matrix]") {
 }
 
 TEST_CASE("Matrix transpose order", "[Matrix]") {
-	constexpr std::array<std::array<double, 4>, 2> arr = {{
+	const Matrix<double, 2, 4> mat({
 		{1.0, 2.0, 3.0, 4.0},
 		{3.0, 4.0, 5.0, 6.0}
-	}};
-	const Matrix<double, 2, 4> mat(arr);
+	});
 
 	const auto transposed = mat.transpose();
 	REQUIRE(transposed.get_row_amount() == mat.get_column_amount());
@@ -92,11 +88,10 @@ TEST_CASE("Matrix transpose order", "[Matrix]") {
 }
 
 TEST_CASE("Matrix transpose", "[Matrix]") {
-	constexpr std::array<std::array<double, 2>, 2> arr = {{
+	const Matrix<double, 2, 2> mat({
 		{1.0, 2.0},
 		{3.0, 4.0}
-	}};
-	const Matrix<double, 2, 2> mat(arr);
+	});
 
 	const Matrix<double, 2, 2> transposed = mat.transpose();
 
@@ -107,16 +102,14 @@ TEST_CASE("Matrix transpose", "[Matrix]") {
 }
 
 TEST_CASE("Matrix addition", "[Matrix]") {
-	constexpr std::array<std::array<double, 2>, 2> lhs_arr = {{
+	const Matrix<double, 2, 2> lhs({
 		{1.0, 2.0},
 		{3.0, 4.0}
-	}};
-	constexpr std::array<std::array<double, 2>, 2> rhs_arr = {{
+	});
+	const Matrix<double, 2, 2> rhs({
 		{5.0, 6.0},
 		{7.0, 8.0}
-	}};
-	const Matrix<double, 2, 2> lhs(lhs_arr);
-	const Matrix<double, 2, 2> rhs(rhs_arr);
+	});
 
 	const Matrix<double, 2, 2> result = lhs + rhs;
 
@@ -127,16 +120,14 @@ TEST_CASE("Matrix addition", "[Matrix]") {
 }
 
 TEST_CASE("Matrix subtraction", "[Matrix]") {
-	constexpr std::array<std::array<double, 2>, 2> lhs_arr = {{
+	const Matrix<double, 2, 2> lhs({
 		{5.0, 5.0},
 		{5.0, 5.0}
-	}};
-	constexpr std::array<std::array<double, 2>, 2> rhs_arr = {{
+	});
+	const Matrix<double, 2, 2> rhs({
 		{4.0, 3.0},
 		{2.0, 1.0}
-	}};
-	const Matrix<double, 2, 2> lhs(lhs_arr);
-	const Matrix<double, 2, 2> rhs(rhs_arr);
+	});
 
 	const Matrix<double, 2, 2> result = lhs - rhs;
 

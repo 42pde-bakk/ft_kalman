@@ -12,6 +12,13 @@
 #include <cmath>
 #include <cassert>
 
+// Primary template
+template <typename Container, typename = void>
+struct is_container : std::false_type {};
+template <typename T, std::size_t N>
+struct is_container<std::array<T, N>> : std::true_type {};
+template <typename T>
+struct is_container<std::vector<T>> : std::true_type {};
 
 template<typename T, size_t ROW_AMOUNT, size_t COLUMN_AMOUNT>
 class Matrix {
@@ -19,6 +26,7 @@ class Matrix {
 
 public:
 	template <typename, size_t, size_t> friend class Matrix;
+
 	Matrix() {
 		for (size_t row = 0; row < ROW_AMOUNT; row++) {
 			for (size_t col = 0; col < COLUMN_AMOUNT; col++) {
@@ -37,31 +45,48 @@ public:
 		this->data = rhs.data;
 	}
 
-	Matrix(const std::array<std::array<T, COLUMN_AMOUNT>, ROW_AMOUNT>& outer_array) {
-		for (size_t row = 0; row < ROW_AMOUNT; row++) {
-			this->data[row] = outer_array[row];
+	// Generic constructor for containers
+	// template <typename Container>
+	// Matrix(const Container& data_in,
+	//        std::enable_if_t<is_container<Container>::value>* = nullptr) {
+	// 	assert(data_in.size() == ROW_AMOUNT);
+	// 	size_t row = 0;
+	// 	for (auto& row_list : data_in) {
+	// 		assert(data_in.size() == COLUMN_AMOUNT);
+	// 		std::copy(row_list.begin(), row_list.end(), this->data[row].begin());
+	// 		++row;
+	// 	}
+	// }
+	Matrix(std::initializer_list<std::initializer_list<T>> init_list) {
+		assert(init_list.size() == ROW_AMOUNT);
+		size_t row = 0;
+		for (auto& row_list : init_list) {
+			assert(row_list.size() == COLUMN_AMOUNT);
+			std::copy(row_list.begin(), row_list.end(), data[row].begin());
+			++row;
 		}
 	}
+
+
+	// Constructor for creating a vector (1-column matrix)
+	template <typename Container>
+	Matrix(const Container& data_in, std::enable_if_t<is_container<Container>::value && (COLUMN_AMOUNT == 1)>* = nullptr) {
+		assert(data_in.size() == ROW_AMOUNT);
+		assert(COLUMN_AMOUNT == 1);
+		std::copy(data_in.cbegin(), data_in.cend(), this->data[0].begin());
+	}
+	Matrix(const std::initializer_list<T>& data_in) {
+		assert(data_in.size() == ROW_AMOUNT);
+		assert(COLUMN_AMOUNT == 1);
+		std::copy(data_in.begin(), data_in.end(), this->data[0].begin());
+	}
+
 
 	Matrix(T n) {
 		for (size_t row = 0; row < ROW_AMOUNT; row++) {
 			for (size_t col = 0; col < COLUMN_AMOUNT; col++) {
 				this->data[row][col] = n;
 			}
-		}
-	}
-
-	Matrix(const std::vector<T>& vec) {
-		assert(ROW_AMOUNT == vec.size());
-		assert(COLUMN_AMOUNT == 1);
-		for (size_t row = 0; row < ROW_AMOUNT; row++) {
-			this->data[row][0] = vec[row];
-		}
-	}
-
-	Matrix(const std::array<T, ROW_AMOUNT>& vec) {
-		for (size_t row = 0; row < ROW_AMOUNT; row++) {
-			this->data[row][0] = vec[row];
 		}
 	}
 
