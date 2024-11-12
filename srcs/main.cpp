@@ -8,6 +8,7 @@
 #include "KalmanFilter.hpp"
 #include <fstream>
 #include "Arguments.hpp"
+#include <iomanip>
 
 std::ofstream of("messages.txt", std::ios::trunc);
 
@@ -30,6 +31,8 @@ Data read_initial_data(std::vector<Message> messages) {
 			case MessageType::SPEED:
 				data.set_speed(msg.get_data().front() / 3.6); // [OK] convert to m/s
 				break;
+			case MessageType::POSITION:
+				data.set_position(msg.get_data());
 			default:
 				break;
 		}
@@ -62,7 +65,7 @@ int run(Arguments &args) {
 
 	connection.start();
 
-	KalmanFilter<9, 9, 9>	filter;
+	KalmanFilter<9, 3, 9>	filter;
 
 	auto last_timestamp_at = Timestamp();
 	auto start_timestamp = std::chrono::system_clock::now();
@@ -84,15 +87,19 @@ int run(Arguments &args) {
 
 			auto state = std::array<double, 9>({
 				data.get_position()[0][0],
-				data.get_position()[0][1],
-				data.get_position()[0][2],
 				velocity[0][0],
-				velocity[0][1],
-				velocity[0][2],
 				data.get_acceleration(0, 0),
+
+				data.get_position()[0][1],
+				velocity[0][1],
 				data.get_acceleration(0, 1),
+
+				data.get_position()[0][2],
+				velocity[0][2],
 				data.get_acceleration(0, 2),
 			});
+
+			std::cout << std::setprecision(12) << "ST" << Matrix<double, 9, 1>(state) << std::endl;
 	
 			filter.set_state(state);
 
@@ -100,30 +107,36 @@ int run(Arguments &args) {
 			data.set_speed(filter.get_current_speed());
 		}
 
-		auto velocity = data.calculate_velocity();
-
-		auto state = std::array<double, 9>({
-			0,
-			0,
-			0,
-			velocity[0][0],
-			velocity[0][1],
-			velocity[0][2],
+		auto state = std::array<double, 3>({
 			data.get_acceleration(0, 0),
 			data.get_acceleration(0, 1),
 			data.get_acceleration(0, 2),
 		});
 
-		auto input = Matrix<double, 9, 1>(state);
+		auto input = Matrix<double, 3, 1>(state);
 
 
 		auto msg_timestamp = messages[0].get_timestamp();
 
 		delta = (msg_timestamp - last_timestamp_at).to_ms();
+		(void)delta;
 
-		const auto mat = filter.predict(delta, input);
+		auto mat = filter.predict(10, input, InputType::ACCELERATION);
 
-		std::cout << mat << std::endl;
+		if (delta % 3000 == 0 && iterations != 0) {
+			auto state = std::array<double, 3>({
+				data.get_position()[0][0],
+				data.get_position()[0][1],
+				data.get_position()[0][2],
+			});
+
+			auto input = Matrix<double, 3, 1>(state);
+
+			mat = filter.predict(0, input, InputType::POSITION);
+		}
+
+
+		std::cout << iterations << " |\n" << filter.state << "\n|" << std::endl;
 
 		connection.send_data(mat);
 

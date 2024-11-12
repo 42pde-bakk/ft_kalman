@@ -16,7 +16,7 @@ enum class MessageType {
 	ACCELERATION,
 	DIRECTION,
 	TRUE_POSITION,
-
+	POSITION,
 };
 
 std::string MessageTypeToString(MessageType type);

@@ -27,7 +27,15 @@ public:
 		}
 	};
 
-	Matrix(const Matrix& rhs) = default;
+	Matrix &operator=(const Matrix &rhs) {
+		this->data = rhs.data;
+
+		return *this;
+	}
+
+	Matrix(const Matrix& rhs) {
+		this->data = rhs.data;
+	}
 
 	Matrix(const std::array<std::array<T, COLUMN_AMOUNT>, ROW_AMOUNT>& outer_array) {
 		for (size_t row = 0; row < ROW_AMOUNT; row++) {
@@ -142,6 +150,16 @@ public:
 		return (out);
 	}
 
+	template<size_t SIZE>
+	static Matrix<double, SIZE, SIZE>	diag(double val) {
+		auto out = Matrix<double, SIZE, SIZE>();
+
+		for (size_t i = 0; i < SIZE; i++) {
+			out[i][i] = val;
+		}
+		return (out);
+	}
+
 	friend std::ostream&	operator<<(std::ostream& o, const Matrix& m) {
 		for (size_t row_nb = 0; row_nb < ROW_AMOUNT; row_nb++) {
 			o << "[";
@@ -153,8 +171,7 @@ public:
 		return (o);
 	}
 
-	template<size_t COL>
-	Matrix operator+(const Matrix<T, ROW_AMOUNT, COL> &rhs) const {
+	Matrix operator+(const Matrix &rhs) const {
 		Matrix out(*this);
 
 		for (size_t row = 0; row < ROW_AMOUNT; row++) {
@@ -165,8 +182,7 @@ public:
 		return (out);
 	}
 
-	template<size_t COL>
-	Matrix operator-(const Matrix<T, ROW_AMOUNT, COL> &rhs) const {
+	Matrix operator-(const Matrix &rhs) const {
 		Matrix out(*this);
 
 		for (size_t row = 0; row < ROW_AMOUNT; row++) {
@@ -187,6 +203,30 @@ public:
 			}
 		}
 		return (out);
+	}
+
+	T max() const {
+		T val = -INFINITY;
+
+		for (size_t row = 0; row < ROW_AMOUNT; row++) {
+			for (size_t column = 0; column < COLUMN_AMOUNT; column++) {
+				if (this->data[row][column] > val)
+					val = this->data[row][column];
+			}
+		}
+		return (val);
+	}
+
+	T min() const {
+		T val = INFINITY;
+
+		for (size_t row = 0; row < ROW_AMOUNT; row++) {
+			for (size_t column = 0; column < COLUMN_AMOUNT; column++) {
+				if (this->data[row][column] < val)
+					val = this->data[row][column];
+			}
+		}
+		return (val);
 	}
 };
 
