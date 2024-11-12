@@ -81,41 +81,57 @@ def calculate_velocity(direction: List[float], speed: int):
     return [
         speed * math.cos(pitch) * math.cos(yaw),
         speed * math.cos(pitch) * math.sin(yaw),
-        speed * math.sin(pitch),
+        -speed * math.sin(pitch),
     ]
 
 
 I = np.eye(9)
 
-R = {"acceleration": np.diag([0.0001] * 3), "position": np.diag([0.005] * 3)}
+R = {
+    "acceleration": np.diag([0.000001] * 3),
+    "position": np.diag([0.1] * 3),
+    "velocity": np.diag([0.01] * 3),
+}
 
 Ppos = 0
-Pvel = 0.00005
-Pacl = 0.0001
-Pmul = 0
+Pvel = 0.001
+Pacl = 0.00001
+Pmul = Pvel * Pacl
 
-P = np.array(
-    [
-        [Ppos, 0, 0, 0, 0, 0, 0, 0, 0],
-        [0, Pvel, Pmul, 0, 0, 0, 0, 0, 0],
-        [0, Pmul, Pacl, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, Ppos, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, Pvel, Pmul, 0, 0, 0],
-        [0, 0, 0, 0, Pmul, Pacl, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, Ppos, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, Pvel, Pmul],
-        [0, 0, 0, 0, 0, 0, 0, Pmul, Pacl],
-    ]
-)
+P = None
+
+
+def reset_P():
+    global P
+    P = np.array(
+        [
+            [Ppos, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, Pvel, Pmul, 0, 0, 0, 0, 0, 0],
+            [0, Pmul, Pacl, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, Ppos, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, Pvel, Pmul, 0, 0, 0],
+            [0, 0, 0, 0, Pmul, Pacl, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, Ppos, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, Pvel, Pmul],
+            [0, 0, 0, 0, 0, 0, 0, Pmul, Pacl],
+        ]
+    )
+
+
+reset_P()
 
 H = {
+    "velocity": np.array(
+        [
+            [0, 1, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 1, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 1, 0],
+        ]
+    ),
     "acceleration": np.array(
         [
-            # [0, 1, 0, 0, 0, 0, 0, 0, 0],
             [0, 0, 1, 0, 0, 0, 0, 0, 0],
-            # [0, 0, 0, 0, 1, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 1, 0, 0, 0],
-            # [0, 0, 0, 0, 0, 0, 0, 1, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 1],
         ]
     ),
@@ -185,6 +201,16 @@ def run_udp(port):
     for i in range(1_000_000):
         input = receive(serverSocket)
 
+        velocity_wrong = calculate_velocity(
+            [input["DIRECTION"][0], input["DIRECTION"][1], input["DIRECTION"][2]],
+            initial_data["SPEED"][0] / 3.6,
+        )
+
+        if i < 10:
+            Z_VEL = np.array([velocity_wrong[0], velocity_wrong[1], velocity_wrong[2]])
+
+            K = update(H["velocity"], R["velocity"], Z_VEL, 0)
+
         Z = np.array(
             [
                 input["ACCELERATION"][0],
@@ -217,6 +243,7 @@ def run_udp(port):
         if int(i) >= 539996:
             break
 
+
 def run(file):
     global X_hat
     df = pd.read_csv(f"{file}.csv")
@@ -238,6 +265,8 @@ def run(file):
         ],
         df.iloc[0]["SPEED"] / 3.6,
     )
+
+    print("VEL", velocity)
 
     X_hat = np.array(
         [
@@ -266,6 +295,16 @@ def run(file):
             row["SPEED"] / 3.6,
         )
 
+        velocity_wrong = calculate_velocity(
+            [row["DIRECTION_X"], row["DIRECTION_Y"], row["DIRECTION_Z"]],
+            df.iloc[0]["SPEED"] / 3.6,
+        )
+
+        if i < 10:
+            Z_VEL = np.array([velocity_wrong[0], velocity_wrong[1], velocity_wrong[2]])
+
+            K = update(H["velocity"], R["velocity"], Z_VEL, 0)
+
         Z = np.array(
             [
                 row["ACCELERATION_X"],
@@ -289,7 +328,6 @@ def run(file):
 
             K_pos = update(H["position"], R["position"], Z, 000)
 
-            # print(K_pos)
             # exit();
 
         real = [
@@ -327,18 +365,24 @@ def run(file):
 
         timestamp += 10
 
-        if int(i) >= 400000:
+        if int(i) >= 1000000:
             break
 
+    print(P)
+
     return (max_diff, diffs, reals, preds)
+
+
 if __name__ == "__main__":
-    if (len(sys.argv) == 2):
+    if len(sys.argv) == 2:
         run_udp(int(sys.argv[1]))
         exit()
 
-    files = ["out", "out_2", "out_3", "out_33"]
+    files = ["out_0", "out_2", "out_3", "out_27", "out_33", "out_98", "out_99"]
+    # files = ["out_98"]
 
     for file in files:
         max_diff, diffs, reals, preds = run(file)
         print(f" {file}, MAX: ", max_diff)
         plot_diffs(diffs, reals, preds)
+        reset_P()

@@ -21,8 +21,8 @@ def run_thread(idx):
             [
                 "./imu-sensor-stream-linux",
                 "--delta",
-                "-d",
-                "10",
+                # "-d",
+                # "10",
                 "-s",
                 str(i),
                 "-p",
