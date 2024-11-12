@@ -44,7 +44,30 @@ public:
 	using KalmanGain = Matrix<double, Nx, Nz>;
 
 	Vector<double, Nx> state{};
+
 private:
+	Vector<double, Nx> previousState{};
+	Vector<double, Nx> currenState{};
+	Vector<double, Nx> predictedState{};
+	unsigned int k;
+	// Matrices
+	Matrix<double, Nx, Nx> state_covariance_matrix;
+	Matrix<double, Nx, Nx> state_transition_matrix;
+	Matrix<double, Nz, Nx> state_to_measurement_matrix;
+	Matrix<double, Nz, Nz> measurement_covariance_matrix;
+	Matrix<double, Nx, Nz> kalman_gain_matrix;
+
+	Matrix<double, Nx, Nx> P_mat = Matrix<double, Nx, Nx>({
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   ,0    , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , GYROSCOPE_NOISE	, 0   , 0   , 0   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , GYROSCOPE_NOISE   , 0   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE   , 0}),
+		std::array<double, Nx>({ 0  , 0  , 0   , 0   , 0   , 0   , 0   , 0   , ACCELEROMETER_NOISE}),
+	});
 
 	EstimateCovarianceMatrix P_mat = EstimateCovarianceMatrix::template identity<Nx>();
 
@@ -67,7 +90,7 @@ private:
 
 public:
 	explicit KalmanFilter() {
-		this->state = Matrix<double, Nx, 1>();
+		this->currenState = Matrix<double, Nx, 1>();
 	}
 
 	StateTransitionMatrix make_f_mat(double delta) {
@@ -129,6 +152,7 @@ public:
 
 		P = ( this->identity - K * H ) * P * (this->identity - K * H).transpose() + K * R * K.transpose();
 
+
 		std::cout << "4: " << P << std::endl;
 
 
@@ -139,11 +163,12 @@ public:
 		predicted_pos[1][0] = this->state[3][0];
 		predicted_pos[2][0] = this->state[6][0];
 
+
 		return predicted_pos;
 	}
 
 	[[nodiscard]] const Vector<double, Nx>& get_state() const {
-		return (this->state);
+		return (this->currenState);
 	}
 
 
@@ -165,11 +190,11 @@ public:
 	}
 
 	void set_state(std::array<double, Nx> &state) {
-		this->state = Matrix<double, Nx, 1>(state);
+		this->currenState = Matrix<double, Nx, 1>(state);
 	}
 
 	double get_current_speed() {
-		auto speed = std::sqrt(std::pow(this->state[0][3], 2) + std::pow(this->state[0][4], 2) + std::pow(this->state[0][5], 2));
+		auto speed = std::sqrt(std::pow(this->currenState[0][3], 2) + std::pow(this->currenState[0][4], 2) + std::pow(this->currenState[0][5], 2));
 
 		return speed;
 	}

@@ -20,7 +20,11 @@ class Matrix {
 public:
 	template <typename, size_t, size_t> friend class Matrix;
 	Matrix() {
-		this->data = std::array<std::array<T, COLUMN_AMOUNT>, ROW_AMOUNT>();
+		for (size_t row = 0; row < ROW_AMOUNT; row++) {
+			for (size_t col = 0; col < COLUMN_AMOUNT; col++) {
+				this->data[row][col] = T();
+			}
+		}
 	};
 
 	Matrix &operator=(const Matrix &rhs) {
@@ -39,6 +43,14 @@ public:
 		}
 	}
 
+	Matrix(T n) {
+		for (size_t row = 0; row < ROW_AMOUNT; row++) {
+			for (size_t col = 0; col < COLUMN_AMOUNT; col++) {
+				this->data[row][col] = n;
+			}
+		}
+	}
+
 	Matrix(const std::vector<T>& vec) {
 		assert(ROW_AMOUNT == vec.size());
 		assert(COLUMN_AMOUNT == 1);
@@ -46,6 +58,7 @@ public:
 			this->data[row][0] = vec[row];
 		}
 	}
+
 	Matrix(const std::array<T, ROW_AMOUNT>& vec) {
 		for (size_t row = 0; row < ROW_AMOUNT; row++) {
 			this->data[row][0] = vec[row];
@@ -74,6 +87,8 @@ public:
 		return (this->data[i]);
 	}
 
+	// For matrix multiplication, the number of columns in the first matrix must be equal to the number of rows in the second matrix.
+	// The result matrix has the number of rows of the first and the number of columns of the second matrix.
 	template<size_t ROW_AMOUNT_2, size_t COLUMN_AMOUNT_2>
 	Matrix<T, ROW_AMOUNT, COLUMN_AMOUNT_2> operator*(const Matrix<T, ROW_AMOUNT_2, COLUMN_AMOUNT_2>& rhs) const {
 		assert(COLUMN_AMOUNT == ROW_AMOUNT_2);
@@ -114,8 +129,8 @@ public:
 	}
 
 	template<size_t R>
-	[[nodiscard]] Matrix<double, ROW_AMOUNT + R, COLUMN_AMOUNT>	vstack(const Matrix<T, R, COLUMN_AMOUNT>& rhs) const {
-		auto out = Matrix<double, ROW_AMOUNT + R, COLUMN_AMOUNT>();
+	[[nodiscard]] Matrix<T, ROW_AMOUNT + R, COLUMN_AMOUNT>	vstack(const Matrix<T, R, COLUMN_AMOUNT>& rhs) const {
+		auto out = Matrix<T, ROW_AMOUNT + R, COLUMN_AMOUNT>();
 		for (size_t r = 0; r < ROW_AMOUNT; r++) {
 			out.data[r] = this->data[r];
 		}
@@ -127,9 +142,8 @@ public:
 	}
 
 	template<size_t SIZE>
-	static Matrix<double, SIZE, SIZE>	identity() {
-		auto out = Matrix<double, SIZE, SIZE>();
-
+	static Matrix<T, SIZE, SIZE>	identity() {
+		Matrix<T, SIZE, SIZE> out;
 		for (size_t i = 0; i < SIZE; i++) {
 			out[i][i] = 1;
 		}
