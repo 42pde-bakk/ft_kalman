@@ -53,7 +53,7 @@ Vector3d Data::calculate_velocity() const {
 	Vector3d velocity({
 		this->speed * std::cos(pitch) * std::cos(yaw),
 		this->speed * std::cos(pitch) * std::sin(yaw),
-		this->speed * std::sin(pitch)
+		-this->speed * std::sin(pitch)
 	});
 
 	return velocity;
