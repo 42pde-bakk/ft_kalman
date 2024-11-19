@@ -14,8 +14,10 @@ set(SOURCES
         srcs/Timestamp.cpp
         srcs/Timestamp.hpp
         srcs/ft_split.cpp
+        srcs/UdpConnection.cpp
 )
-add_executable(ft_kalman srcs/main.cpp ${SOURCES})
+add_executable(ft_kalman srcs/main.cpp ${SOURCES}
+        )
 
 Include(FetchContent)
 
