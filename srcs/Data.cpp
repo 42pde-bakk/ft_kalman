@@ -16,7 +16,7 @@ void Data::set_acceleration(const std::vector<double>& vec) {
 	this->acceleration.set_vector(vec);
 }
 
-void Data::set_speed(double sp) {
+void Data::set_speed(const double sp) {
 	this->speed = sp;
 }
 
@@ -41,14 +41,14 @@ const Matrix<double, 3, 1>& Data::get_acceleration() const {
 	return (this->acceleration);
 }
 
-double Data::get_acceleration(size_t row_nb, size_t col_nb) const {
+double Data::get_acceleration(const size_t row_nb, const size_t col_nb) const {
 	return (this->acceleration[row_nb][col_nb]);
 }
 
 Vector3d Data::calculate_velocity() const {
 	// double roll = this->direction[0][0];
-	double pitch = this->direction[1][0];
-	double yaw = this->direction[2][0];
+	const double pitch = this->direction[1][0];
+	const double yaw = this->direction[2][0];
 
 	Vector3d velocity({
 		this->speed * std::cos(pitch) * std::cos(yaw),
