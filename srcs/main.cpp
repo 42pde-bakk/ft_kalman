@@ -34,6 +34,12 @@ void send_data(const int socket_fd, struct sockaddr_in* serverAddr, const Matrix
 	}
 }
 
+static bool received_position(const std::vector<Message>& messages) {
+	return std::any_of(messages.begin(), messages.end(), [](const Message& msg) {
+		return msg.get_message_type() == MessageType::POSITION;
+	});
+}
+
 int run(const Arguments &args) {
 	Data data{};
 	KalmanFilter<9, 3, 9>	filter;
@@ -83,18 +89,14 @@ int run(const Arguments &args) {
 		const double timedelta = msg_timestamp.since(last_timestamp);
 		std::cerr << "timedelta = " << timedelta << "\n";
 
-		auto K = filter.update(filter.H_velocity, filter.R_velocity, data.calculate_velocity(), timedelta);
+		data.update_velocity(timedelta);
+		filter.predict(timedelta); // TODO: do I need to send control data?
 
-		K = filter.update(filter.H_acceleration, filter.R_acceleration, data.get_acceleration(), timedelta);
-
-
-		if (std::any_of(messages.begin(), messages.end(), [](const Message& msg) {
-				return msg.get_message_type() == MessageType::POSITION;
-		})) {
+		if (received_position(messages)) {
 			std::cerr << "We have a position!\n";
-			K = filter.update(filter.H_position, filter.R_position, data.get_position(), timedelta);
+			const auto K = filter.update(filter.H_position, filter.R_position, data.get_position());
+			(void)K;
 		}
-		(void)K;
 		connection.send_data(filter.get_state());
 
 		iterations++;

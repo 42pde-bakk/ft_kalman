@@ -189,7 +189,10 @@ public:
 		for (size_t row_nb = 0; row_nb < ROW_AMOUNT; row_nb++) {
 			o << "[";
 			for (size_t col_nb = 0; col_nb < COLUMN_AMOUNT; col_nb++) {
-				o << m.data[row_nb][col_nb] << ' ';
+				o << m.data[row_nb][col_nb];
+				if (col_nb < COLUMN_AMOUNT - 1) {
+					o << ' ';
+				}
 			}
 			o << "]\n";
 		}
