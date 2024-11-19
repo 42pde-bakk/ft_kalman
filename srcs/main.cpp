@@ -13,33 +13,6 @@
 std::ofstream of("messages.txt", std::ios::trunc);
 using Filter = KalmanFilter<9,3,9>;
 
-Data read_initial_data(const std::vector<Message>& messages) {
-	Data data{};
-
-	for (size_t i = 0; i < messages.size(); i++) {
-		const auto& msg = messages[i];
-
-		switch (msg.get_message_type()) {
-			case MessageType::TRUE_POSITION:
-				data.set_position(msg.get_data());
-				break;
-			case MessageType::DIRECTION:
-				data.set_direction(msg.get_data());
-				break;
-			case MessageType::ACCELERATION:
-				data.set_acceleration(msg.get_data());
-				break;
-			case MessageType::SPEED:
-				data.set_speed(msg.get_data().front() / 3.6); // [OK] convert to m/s
-				break;
-			case MessageType::POSITION:
-				data.set_position(msg.get_data());
-			default:
-				break;
-		}
-	}
-	return (data);
-}
 
 void send_data(const int socket_fd, struct sockaddr_in* serverAddr, const Matrix<double, 3, 1>& matrix) {
 	std::string state_str;
@@ -52,121 +25,89 @@ void send_data(const int socket_fd, struct sockaddr_in* serverAddr, const Matrix
 
 	const ssize_t result = sendto(socket_fd, state_str.c_str(), state_str.length(), 0, (struct sockaddr*) serverAddr,
 								  sizeof(*serverAddr));
-	std::cerr << "sent state_str, result = " << result << "\n";
 	if (result == -1) {
 		perror("sendto");
 		exit(EXIT_FAILURE);
-	} else if (result == 0) {
+	}
+	if (result == 0) {
 		exit(EXIT_SUCCESS);
 	}
 }
 
 int run(const Arguments &args) {
-	Filter::KalmanGainMatrix K;
-	auto connection = UdpConnection(args.port);
-
-	connection.start();
-
+	Data data{};
 	KalmanFilter<9, 3, 9>	filter;
 	size_t iterations = 0;
-  
+
+	auto connection = UdpConnection(args.port);
+	connection.start();
+
+	std::vector<Message>messages = connection.get_messages();
+	std::cerr << "Received " << messages.size() << " initial messages\n";
+	for (const auto& msg : messages) {
+		std::cerr << "Initial message:\n" << msg << "\n";
+		data.add_message_information(msg);
+	}
+
+	Vector3d velocity = data.calculate_velocity();
+	std::cerr << "velocity: " << velocity << "\n";
+	const Filter::StateVector state{
+		data.get_position()[0][0],
+		velocity[0][0],
+		data.get_acceleration(0, 0),
+
+		data.get_position()[0][1],
+		velocity[0][1],
+		data.get_acceleration(0, 1),
+
+		data.get_position()[0][2],
+		velocity[0][2],
+		data.get_acceleration(0, 2),
+	};
+	std::cout << std::setprecision(12) << "State:\n" << state << std::endl;
+	filter.set_state(state);
+	Timestamp last_timestamp = messages[0].get_timestamp();
+	connection.send_data(filter.get_state());
+
 	while (true) {
-		auto messages = connection.get_messages();
+		messages = connection.get_messages();
+		std::cerr << "Received " << messages.size() << " messages\n";
 		if (messages.empty()) {
 			break;
 		}
 		for (const auto& msg : messages) {
-			std::cerr << msg << "\n";
+			std::cerr << "Message on iteration " << iterations << ":\n" << msg << "\n";
+			data.add_message_information(msg);
 		}
+		const Timestamp msg_timestamp = messages[0].get_timestamp();
+		const double timedelta = msg_timestamp.since(last_timestamp);
+		std::cerr << "timedelta = " << timedelta << "\n";
 
-		auto data = read_initial_data(messages);
-		// Should we iterate over the messages and update one by one?
+		auto K = filter.update(filter.H_velocity, filter.R_velocity, data.calculate_velocity(), timedelta);
+
+		K = filter.update(filter.H_acceleration, filter.R_acceleration, data.get_acceleration(), timedelta);
 
 
-		if (iterations == 0) {
-			auto velocity = data.calculate_velocity();
-			Filter::StateVector state{
-				data.get_position()[0][0],
-				velocity[0][0],
-				data.get_acceleration(0, 0),
-
-				data.get_position()[0][1],
-				velocity[0][1],
-				data.get_acceleration(0, 1),
-
-				data.get_position()[0][2],
-				velocity[0][2],
-				data.get_acceleration(0, 2),
-			};
-			std::cout << std::setprecision(12) << "State:\n" << state << std::endl;
-			filter.set_state(state);
+		if (std::any_of(messages.begin(), messages.end(), [](const Message& msg) {
+				return msg.get_message_type() == MessageType::POSITION;
+		})) {
+			std::cerr << "We have a position!\n";
+			K = filter.update(filter.H_position, filter.R_position, data.get_position(), timedelta);
 		}
-
-		// K =
-
-		K = filter.update(filter.H_acceleration, filter.R_acceleration, data.get_acceleration(), 10);
-
-		// auto state = std::array<double, 3>({
-		// 	data.get_acceleration(0, 0),
-		// 	data.get_acceleration(0, 1),
-		// 	data.get_acceleration(0, 2),
-		// });
-
-		// auto input = Matrix<double, 3, 1>(state);
-
-
-		auto msg_timestamp = messages[0].get_timestamp();
-
-		delta = (msg_timestamp - last_timestamp_at).to_ms();
-		(void)delta;
-
-
-		// auto mat = filter.predict(10, input, InputType::ACCELERATION);
-		//
-		// if (delta % 3000 == 0 && iterations != 0) {
-		// 	auto state = std::array<double, 3>({
-		// 		data.get_position()[0][0],
-		// 		data.get_position()[0][1],
-		// 		data.get_position()[0][2],
-		// 	});
-		//
-		// 	auto input = Matrix<double, 3, 1>(state);
-		//
-		// 	mat = filter.predict(0, input, InputType::POSITION);
-		// }
-
-
-		std::cout << iterations << " |\n" << filter.get_state() << "\n|" << std::endl;
-
+		(void)K;
 		connection.send_data(filter.get_state());
 
-		for (size_t i = 0; i < messages.size(); i++)
-		{
-			std::cout << "[" << i << "] " << messages[i] << "\n";
-		}
-
 		iterations++;
-		last_timestamp_at = msg_timestamp;
-
-		if (args.iter_limit != std::string::npos && iterations >= args.iter_limit) {
-			std::cerr << "Iter limit reached, stopping." << std::endl;
-			break;
-		}
-
+		last_timestamp = msg_timestamp;
 	}
 
-	auto end_timestamp = std::chrono::system_clock::now();
-
-	std::cout << "Survived for " << 
-		(end_timestamp - start_timestamp).count() / 1'000'000'000u - 1 << " seconds, iterations: " << iterations << std::endl;
-
-	std::cout << "DONE!" << std::endl;
+	std::cout << "Survived " << iterations << " iterations!" << std::endl;
 
 	return EXIT_SUCCESS;
 }
 
-int main(int argc, char **argv) {
-	Arguments args(argc, argv);
+int main(const int argc, char **argv) {
+	const Arguments args(argc, argv);
 
 	run(args);
 }
