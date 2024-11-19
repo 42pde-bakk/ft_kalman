@@ -32,9 +32,9 @@ Message::Message(const std::string& msg) {
 		this->_messageType = MessageType::MSG_END;
 	} else if (msg.find("Trajectory Generat") != std::string::npos) {
 	} else {
-		size_t fpos = msg.find('['),
-				lpos = msg.find(']'),
-				newlinepos = msg.find('\n');
+		const size_t fpos = msg.find('[');
+		const size_t lpos = msg.find(']');
+		const size_t newlinepos = msg.find('\n');
 
 		assert(fpos != std::string::npos);
 		assert(lpos != std::string::npos);
@@ -71,7 +71,6 @@ const std::vector<double>& Message::get_data() const {
 }
 
 std::ostream& operator<<(std::ostream& o, const Message& msg) {
-	o << "Message:\n";
 	o << "\tType: " << MessageTypeToString(msg._messageType) << "\n";
 	o << "\tTimestamp: " << msg._timestamp << "\n";
 	o << "\tdata: [ ";
