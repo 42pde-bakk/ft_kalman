@@ -100,7 +100,6 @@ public:
             result[i * 3][i * 3 + 2] = vel;
             result[i * 3 + 1][i * 3 + 2] = timedelta;
         }
-        std::cerr << "TransitionMatrix (F):\n" << result << '\n';
         return (result);
     }
 

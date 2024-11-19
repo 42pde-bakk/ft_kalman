@@ -1,3 +1,5 @@
+#include <algorithm>
+
 #include "UdpConnection.hpp"
 #include <iostream>
 #include <arpa/inet.h>
@@ -11,10 +13,10 @@
 #include <iomanip>
 
 std::ofstream of("messages.txt", std::ios::trunc);
-using Filter = KalmanFilter<9,3,9>;
+using Filter = KalmanFilter<9, 3, 9>;
 
 
-void send_data(const int socket_fd, struct sockaddr_in* serverAddr, const Matrix<double, 3, 1>& matrix) {
+void send_data(const int socket_fd, sockaddr_in* serverAddr, const Matrix<double, 3, 1>& matrix) {
 	std::string state_str;
 	for (size_t row = 0; row < 3; row++) {
 		state_str += std::to_string(matrix[row][0]);
@@ -57,7 +59,7 @@ int run(const Arguments &args) {
 
 	Vector3d velocity = data.calculate_velocity();
 	std::cerr << "velocity: " << velocity << "\n";
-	const Filter::StateVector state{
+	const Filter::StateVector beginState{
 		data.get_position()[0][0],
 		velocity[0][0],
 		data.get_acceleration(0, 0),
@@ -70,8 +72,8 @@ int run(const Arguments &args) {
 		velocity[0][2],
 		data.get_acceleration(0, 2),
 	};
-	std::cout << std::setprecision(12) << "State:\n" << state << std::endl;
-	filter.set_state(state);
+	std::cout << std::setprecision(12) << "State:\n" << beginState << std::endl;
+	filter.set_state(beginState);
 	Timestamp last_timestamp = messages[0].get_timestamp();
 	connection.send_data(filter.get_state());
 
@@ -101,6 +103,7 @@ int run(const Arguments &args) {
 
 		iterations++;
 		last_timestamp = msg_timestamp;
+		std::cerr << "End of loop, state:\n" << filter.get_state() << "\n";
 	}
 
 	std::cout << "Survived " << iterations << " iterations!" << std::endl;
