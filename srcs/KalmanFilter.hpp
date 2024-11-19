@@ -52,9 +52,30 @@ public:
 	using RMatrix = Matrix<double, 3, 3>;
 	using FMatrix = Matrix<double, 9, 9>;
 	using QMatrix = FMatrix;
+
+	const RMatrix R_acceleration = RMatrix::diag<3>(ACCELEROMETER_NOISE);
+	const RMatrix R_position = RMatrix::diag<3>(GPS_NOISE);
+	const RMatrix R_velocity = RMatrix::diag<3>(GYROSCOPE_NOISE);
+	const Matrix<double, 9, 9> I = Matrix<double, 9, 9>::identity<9>();
+	const CovarianceMatrix H_velocity{
+			{0, 1, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 1, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 1, 0},
+		};
+	const CovarianceMatrix H_acceleration{
+			{0, 0, 1, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 1, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 1},
+		};
+	const CovarianceMatrix H_position{
+			{1, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 1, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 1, 0, 0},
+		};
+
 private:
-	Vector<double, Nx> state{}; // x,xvel,xacc, y,yvel,yacc, z,zvel,zacc
-	Vector<double, Nx> X_hat{};
+	StateVector state{}; // x,xvel,xacc, y,yvel,yacc, z,zvel,zacc
+	StateVector X_hat{};
 	Matrix<double, 9, 9> P{
 		{Ppos, 0, 0, 0, 0, 0, 0, 0, 0},
 		{0, Pvel, Pmul, 0, 0, 0, 0, 0, 0},
@@ -65,25 +86,6 @@ private:
 		{0, 0, 0, 0, 0, 0, Ppos, 0, 0},
 		{0, 0, 0, 0, 0, 0, 0, Pvel, Pmul},
 		{0, 0, 0, 0, 0, 0, 0, Pmul, Pacl},
-	};
-	const RMatrix R_acceleration = RMatrix::diag<3>(ACCELEROMETER_NOISE);
-	const RMatrix R_position = RMatrix::diag<3>(GPS_NOISE);
-	const RMatrix R_velocity = RMatrix::diag<3>(GYROSCOPE_NOISE);
-	const Matrix<double, 9, 9> I = Matrix<double, 9, 9>::identity<9>();
-	const CovarianceMatrix H_velocity{
-		{0, 1, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 1, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 1, 0},
-	};
-	const CovarianceMatrix H_acceleration{
-		{0, 0, 1, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 1, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0, 0, 1},
-	};
-	const CovarianceMatrix H_position{
-		{1, 0, 0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 1, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 1, 0, 0},
 	};
 	KalmanGainMatrix kalmanGain;
 
@@ -116,11 +118,20 @@ public:
 		P = (f * P * f.transpose()) + q;
 		kalmanGain = P * h.transpose() * (h * P * h.transpose() + r).pow(-1);
 
-		X_hat = X_hat + kalmanGain; * (z - h * X_hat);
+		X_hat = X_hat + kalmanGain * (z - h * X_hat);
 
 		P = (I - kalmanGain * h) * P * (I - kalmanGain * h).transpose() + kalmanGain * r * kalmanGain.transpose();
 
 		return kalmanGain;
+	}
+
+	void set_state(const StateVector& stateVector) {
+		this->state = stateVector;
+		this->X_hat = stateVector;
+	}
+
+	StateVector get_state() {
+		return (this->X_hat);
 	}
 
 };
