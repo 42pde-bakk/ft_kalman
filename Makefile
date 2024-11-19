@@ -81,12 +81,12 @@ debug:
 
 PID_FILE := /tmp/imu-sensor-stream-linux.pid
 test: all
-	./imu-sensor-stream-linux & echo $$! > $(PID_FILE)
+	./imu-sensor-stream-linux --delta & # echo $$! > $(PID_FILE)
 	@echo "Task started with PID: $$(cat $(PID_FILE))"
 	./ft_kalman
-	@PID=$$(cat $(PID_FILE)); \
-	echo "Stopping task with PID: $$PID"; \
-	kill $$PID; rm -f $(PID_FILE)
+	@#PID=$$(cat $(PID_FILE)); \
+#	echo "Stopping task with PID: $$PID"; \
+#	kill $$PID; rm -f $(PID_FILE)
 
 -include $(DEP)
 
