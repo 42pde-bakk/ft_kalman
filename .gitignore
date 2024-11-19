@@ -42,3 +42,8 @@ out*
 Testing/
 build/
 
+
+# Python bullshit
+venv/
+.venv/
+__pycache__/
