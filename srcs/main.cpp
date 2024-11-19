@@ -11,12 +11,13 @@
 #include <iomanip>
 
 std::ofstream of("messages.txt", std::ios::trunc);
+using Filter = KalmanFilter<9,3,9>;
 
-Data read_initial_data(std::vector<Message> messages) {
+Data read_initial_data(const std::vector<Message>& messages) {
 	Data data{};
 
 	for (size_t i = 0; i < messages.size(); i++) {
-		auto msg = messages[i];
+		const auto& msg = messages[i];
 
 		switch (msg.get_message_type()) {
 			case MessageType::TRUE_POSITION:
@@ -60,32 +61,31 @@ void send_data(const int socket_fd, struct sockaddr_in* serverAddr, const Matrix
 	}
 }
 
-int run(Arguments &args) {
+int run(const Arguments &args) {
+	Filter::KalmanGainMatrix K;
 	auto connection = UdpConnection(args.port);
 
 	connection.start();
 
 	KalmanFilter<9, 3, 9>	filter;
-
-	auto last_timestamp_at = Timestamp();
-	auto start_timestamp = std::chrono::system_clock::now();
-
-	auto delta = 0;
 	size_t iterations = 0;
   
 	while (true) {
 		auto messages = connection.get_messages();
-		if (messages.size() == 0) {
+		if (messages.empty()) {
 			break;
+		}
+		for (const auto& msg : messages) {
+			std::cerr << msg << "\n";
 		}
 
 		auto data = read_initial_data(messages);
+		// Should we iterate over the messages and update one by one?
 
 
 		if (iterations == 0) {
 			auto velocity = data.calculate_velocity();
-
-			auto state = std::array<double, 9>({
+			Filter::StateVector state{
 				data.get_position()[0][0],
 				velocity[0][0],
 				data.get_acceleration(0, 0),
@@ -97,23 +97,22 @@ int run(Arguments &args) {
 				data.get_position()[0][2],
 				velocity[0][2],
 				data.get_acceleration(0, 2),
-			});
-
-			std::cout << std::setprecision(12) << "ST" << Matrix<double, 9, 1>(state) << std::endl;
-	
+			};
+			std::cout << std::setprecision(12) << "State:\n" << state << std::endl;
 			filter.set_state(state);
-
-		} else {
-			data.set_speed(filter.get_current_speed());
 		}
 
-		auto state = std::array<double, 3>({
-			data.get_acceleration(0, 0),
-			data.get_acceleration(0, 1),
-			data.get_acceleration(0, 2),
-		});
+		// K =
 
-		auto input = Matrix<double, 3, 1>(state);
+		K = filter.update(filter.H_acceleration, filter.R_acceleration, data.get_acceleration(), 10);
+
+		// auto state = std::array<double, 3>({
+		// 	data.get_acceleration(0, 0),
+		// 	data.get_acceleration(0, 1),
+		// 	data.get_acceleration(0, 2),
+		// });
+
+		// auto input = Matrix<double, 3, 1>(state);
 
 
 		auto msg_timestamp = messages[0].get_timestamp();
@@ -121,24 +120,25 @@ int run(Arguments &args) {
 		delta = (msg_timestamp - last_timestamp_at).to_ms();
 		(void)delta;
 
-		auto mat = filter.predict(10, input, InputType::ACCELERATION);
 
-		if (delta % 3000 == 0 && iterations != 0) {
-			auto state = std::array<double, 3>({
-				data.get_position()[0][0],
-				data.get_position()[0][1],
-				data.get_position()[0][2],
-			});
+		// auto mat = filter.predict(10, input, InputType::ACCELERATION);
+		//
+		// if (delta % 3000 == 0 && iterations != 0) {
+		// 	auto state = std::array<double, 3>({
+		// 		data.get_position()[0][0],
+		// 		data.get_position()[0][1],
+		// 		data.get_position()[0][2],
+		// 	});
+		//
+		// 	auto input = Matrix<double, 3, 1>(state);
+		//
+		// 	mat = filter.predict(0, input, InputType::POSITION);
+		// }
 
-			auto input = Matrix<double, 3, 1>(state);
 
-			mat = filter.predict(0, input, InputType::POSITION);
-		}
+		std::cout << iterations << " |\n" << filter.get_state() << "\n|" << std::endl;
 
-
-		std::cout << iterations << " |\n" << filter.state << "\n|" << std::endl;
-
-		connection.send_data(mat);
+		connection.send_data(filter.get_state());
 
 		for (size_t i = 0; i < messages.size(); i++)
 		{

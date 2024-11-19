@@ -172,11 +172,11 @@ public:
 		return messages;
 	}
 
-	void send_data(const Matrix<double, 3, 1>& matrix) {
+	void send_data(const Matrix<double, 9, 1>& matrix) {
 		std::string state_str;
-		for (size_t row = 0; row < 3; row++) {
+		for (size_t row = 0; row < 9; row += 3) {
 			state_str += std::to_string(matrix[row][0]);
-			if (row != 2) {
+			if (row != 6) {
 				state_str += ' ';
 			}
 		}
