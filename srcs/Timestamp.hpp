@@ -4,10 +4,11 @@
 
 #ifndef FT_KALMAN_TIMESTAMP_HPP
 #define FT_KALMAN_TIMESTAMP_HPP
+#include <iostream>
 #include <string>
 #include <ostream>
 
-typedef unsigned int t_time;
+typedef int t_time;
 
 class Timestamp {
 	union {
@@ -29,14 +30,14 @@ public:
 
 	void set(const std::string& s);
 
-	size_t to_ms();
+	// [[nodiscard]] size_t to_ms() const;
 
 	[[nodiscard]] double since(const Timestamp& old) const {
-		return 3600 * (this->hours - old.hours) + 60 * (this->minutes - old.minutes) + (this->seconds - old.seconds) + (double)(this->milliseconds - old.milliseconds) / 1000;
+		return 3600 * (this->hours - old.hours) + 60 * (this->minutes - old.minutes) + (this->seconds - old.seconds) + static_cast<double>(this->milliseconds - old.milliseconds) / 1000.0;
 	}
 
 	friend std::ostream& operator<<(std::ostream& o, const Timestamp& t);
-	friend Timestamp operator-(Timestamp& lhs, const Timestamp& rhs);
+	// friend Timestamp operator-(const Timestamp& lhs, const Timestamp& rhs);
 };
 
 
