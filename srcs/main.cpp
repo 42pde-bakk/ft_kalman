@@ -87,19 +87,18 @@ int run(const Arguments &args) {
 		for (const auto& msg : messages) {
 			data.add_message_information(msg);
 			messagesFile << msg << '\n';
-			std::cerr << "msg " << msg.get_timestamp() << std::endl;
 		}
 		const Timestamp msg_timestamp = messages[0].get_timestamp();
 		const double timedelta = msg_timestamp.since(last_timestamp);
-		std::cerr << "timedelta = " << timedelta << "\n";
+		// std::cerr << "timedelta = " << timedelta << "\n";
 
-		data.update_velocity(timedelta);
+		// data.update_velocity(timedelta);
 		filter.predict(timedelta); // TODO: do I need to send control data?
 
+		filter.update(filter.H_acceleration, filter.R_acceleration, data.get_acceleration());
 		if (received_position(messages)) {
-			std::cerr << "We have a position!\n";
-			const auto K = filter.update(filter.H_position, filter.R_position, data.get_position());
-			(void)K;
+			// std::cerr << "We have a position!\n";
+			filter.update(filter.H_position, filter.R_position, data.get_position());
 			statesFile << "Update: ";
 		} else {
 			statesFile << "Predict: ";
@@ -112,7 +111,7 @@ int run(const Arguments &args) {
 		// std::cerr << "End of loop, state:\n" << filter.get_state() << "\n";
 	}
 
-	std::cout << "Survived " << iterations << " iterations!" << std::endl;
+	// std::cout << "Survived " << iterations << " iterations!" << std::endl;
 
 	return EXIT_SUCCESS;
 }
