@@ -4,6 +4,8 @@
 
 #include "Data.hpp"
 
+#include <iostream>
+
 #include "Message.hpp"
 
 void Data::set_position(const std::vector<double>& vec) {
@@ -20,6 +22,10 @@ void Data::set_acceleration(const std::vector<double>& vec) {
 
 void Data::set_speed(const double sp) {
 	this->speed = sp;
+}
+
+double Data::get_speed() const {
+	return (this->speed);
 }
 
 std::ostream& operator<<(std::ostream& o, const Data& d) {
@@ -52,8 +58,11 @@ Vector3d Data::calculate_velocity() const {
 	const double pitch = this->direction[1][0];
 	const double yaw = this->direction[2][0];
 
-	const Vector3d dir({direction[0][0], direction[1][0], direction[2][0]});
+	const Vector3d dir({roll, pitch, yaw});
 
+	std::cout << "calculate_velocity:\n";
+	std::cout << "dir: " << dir << "\n";
+	std::cout << "acceleration: " << this->acceleration << "\n";
 	// First roll:
 	const Matrix<double,3, 3> rollMatrix({
 		{1, 0, 0},
@@ -73,16 +82,19 @@ Vector3d Data::calculate_velocity() const {
 		{0, 0, 1}
 	});
 
-	return (rollMatrix * pitchMatrix * yawMatrix) * dir;
-
-
-	Vector3d velocity({
-		this->speed * std::cos(pitch) * std::cos(yaw),
-		this->speed * std::cos(pitch) * std::sin(yaw),
-		-this->speed * std::sin(pitch)
-	});
-
+	const Vector3d velocity = (rollMatrix * pitchMatrix * yawMatrix) * dir;
+	std::cout << "velocity: " << velocity << "\n";
 	return velocity;
+
+
+
+	// Vector3d velocity({
+	// 	this->speed * std::cos(pitch) * std::cos(yaw),
+	// 	this->speed * std::cos(pitch) * std::sin(yaw),
+	// 	-this->speed * std::sin(pitch)
+	// });
+	//
+	// return velocity;
 }
 
 

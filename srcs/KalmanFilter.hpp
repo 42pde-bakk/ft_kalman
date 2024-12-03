@@ -5,7 +5,7 @@
 #ifndef FT_KALMAN_KALMANFILTER_HPP
 #define FT_KALMAN_KALMANFILTER_HPP
 
-#include <iostream>
+#include <fstream>
 #include "Matrix.hpp"
 #include "Data.hpp"
 
@@ -133,6 +133,13 @@ public:
 
     StateVector get_state() {
         return (this->state);
+    }
+
+    void printState(std::ofstream& of) {
+        for (size_t i = 0; i < Nx; i++) {
+            of << this->state[i][0] << " ";
+        }
+        of << std::endl;
     }
 };
 
