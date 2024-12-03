@@ -3,14 +3,15 @@
 //
 
 #include <vector>
+#include <iostream>
 #include "Timestamp.hpp"
 
 std::vector<std::string>	ft_split(const std::string& s, const std::string& delim);
 
-void Timestamp::set(const std::string& str) {
-	const auto vec = ft_split(str, ".:");
+void Timestamp::set(const std::string& s) {
+	const auto vec = ft_split(s, ".:");
 	for (int i = 0; i < 4; i++) {
-		this->time[i] = std::stoul(vec[i], nullptr, 10);
+		this->time[i] = std::stol(vec[i], nullptr, 10);
 	}
 }
 
@@ -23,27 +24,24 @@ Timestamp& Timestamp::operator=(const Timestamp&rhs) {
 	return *this;
 }
 
-
-size_t Timestamp::to_ms() {
-	return this->hours * 3'600'000 + this->minutes * 60'000 + this->seconds * 1000 + this->milliseconds;
-}
+// size_t Timestamp::to_ms() const {
+// 	return this->hours * 3'600'000 + this->minutes * 60'000 + this->seconds * 1000 + this->milliseconds;
+// }
 
 std::ostream& operator<<(std::ostream& o, const Timestamp& t) {
-	o << "Timestamp " << t.hours << ": " << t.minutes << ": " << t.seconds << "." << t.milliseconds;
+	o << "Timestamp(" << t.hours << "h " << t.minutes << "m " << t.seconds << "s " << t.milliseconds << "ms)";
 	return (o);
 }
 
-#include <iostream>
-
-Timestamp operator-(Timestamp &lhs, const Timestamp &rhs) {
-	auto n = Timestamp();
-
-	n.hours = lhs.hours - rhs.hours;
-	n.minutes = lhs.minutes - rhs.minutes;
-	n.seconds = lhs.seconds - rhs.seconds;
-	n.milliseconds = lhs.milliseconds - rhs.milliseconds;
-
-	std::cout << n.milliseconds << std::endl;
-
-	return n;
-}
+// Timestamp operator-(const Timestamp &lhs, const Timestamp &rhs) {
+// 	auto n = Timestamp();
+//
+// 	n.hours = lhs.hours - rhs.hours;
+// 	n.minutes = lhs.minutes - rhs.minutes;
+// 	n.seconds = lhs.seconds - rhs.seconds;
+// 	n.milliseconds = lhs.milliseconds - rhs.milliseconds;
+//
+// 	std::cout << n.milliseconds << std::endl;
+//
+// 	return n;
+// }
