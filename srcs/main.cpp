@@ -89,6 +89,7 @@ int run(const Arguments &args) {
 		filter.predict(timedelta);
 
 		filter.update(filter.H_acceleration, filter.R_acceleration, data.get_acceleration());
+		// filter.update(filter.H_velocity, filter.R_velocity, data.get_velocity());
 		if (received_position(messages)) {
 			filter.update(filter.H_position, filter.R_position, data.get_position());
 		}

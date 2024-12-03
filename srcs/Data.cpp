@@ -56,6 +56,10 @@ double Data::get_acceleration(const size_t row_nb, const size_t col_nb) const {
 	return (this->acceleration[row_nb][col_nb]);
 }
 
+const Vector3d & Data::get_velocity() const {
+	return (this->velocity);
+}
+
 double Data::get_velocity(const size_t row_nb, const size_t col_nb) const {
 	return (this->velocity[row_nb][col_nb]);
 }
