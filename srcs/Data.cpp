@@ -3,9 +3,6 @@
 //
 
 #include "Data.hpp"
-
-#include <iostream>
-
 #include "Message.hpp"
 
 void Data::set_position(const std::vector<double>& vec) {
@@ -40,9 +37,15 @@ std::ostream& operator<<(std::ostream& o, const Data& d) {
 const Matrix<double, 3, 1>& Data::get_position() const {
 	return (this->position);
 }
+double Data::get_position(const size_t row_nb, const size_t col_nb) const {
+	return (this->position)[row_nb][col_nb];
+}
 
 const Matrix<double, 3, 1>& Data::get_direction() const {
 	return (this->direction);
+}
+double Data::get_direction(const size_t row_nb, const size_t col_nb) const {
+	return (this->direction[row_nb][col_nb]);
 }
 
 const Matrix<double, 3, 1>& Data::get_acceleration() const {
@@ -53,50 +56,9 @@ double Data::get_acceleration(const size_t row_nb, const size_t col_nb) const {
 	return (this->acceleration[row_nb][col_nb]);
 }
 
-Vector3d Data::calculate_velocity() const {
-	const double roll = this->direction[0][0];
-	const double pitch = this->direction[1][0];
-	const double yaw = this->direction[2][0];
-
-	const Vector3d dir({roll, pitch, yaw});
-
-	std::cout << "calculate_velocity:\n";
-	std::cout << "dir: " << dir << "\n";
-	std::cout << "acceleration: " << this->acceleration << "\n";
-	// First roll:
-	const Matrix<double,3, 3> rollMatrix({
-		{1, 0, 0},
-		{0, std::cos(roll), -std::sin(roll)},
-		{0, std::sin(roll), std::cos(roll)}
-	});
-
-	const Matrix<double,3, 3> pitchMatrix({
-		{std::cos(pitch), 0, -std::sin(pitch)},
-		{0, 1, 0},
-		{std::sin(pitch), 0, std::cos(pitch)}
-	});
-
-	const Matrix<double,3, 3> yawMatrix({
-		{std::cos(yaw), -std::sin(yaw), 0},
-		{std::sin(yaw), std::cos(yaw), 0},
-		{0, 0, 1}
-	});
-
-	const Vector3d velocity = (rollMatrix * pitchMatrix * yawMatrix) * dir;
-	std::cout << "velocity: " << velocity << "\n";
-	return velocity;
-
-
-
-	// Vector3d velocity({
-	// 	this->speed * std::cos(pitch) * std::cos(yaw),
-	// 	this->speed * std::cos(pitch) * std::sin(yaw),
-	// 	-this->speed * std::sin(pitch)
-	// });
-	//
-	// return velocity;
+double Data::get_velocity(const size_t row_nb, const size_t col_nb) const {
+	return (this->velocity[row_nb][col_nb]);
 }
-
 
 void	Data::update_velocity(const double timedelta) {
 	const double roll = this->direction[0][0];
@@ -119,10 +81,6 @@ void	Data::update_velocity(const double timedelta) {
 		{0, 0, 1}
 	});
 	const Matrix<double, 3, 3>	r = yawMatrix * pitchMatrix * rollMatrix;
-
-	// const double	a_x = r[0][0] * this->acceleration[0][0] + r[0][1] * this->acceleration[1][0] + r[0][2] * this->acceleration[2][0];
-	// const double	a_y = r[1][0] * this->acceleration[0][0] + r[1][1] * this->acceleration[1][0] + r[1][2] * this->acceleration[2][0];
-	// const double	a_z = r[2][0] * this->acceleration[0][0] + r[2][1] * this->acceleration[1][0] + r[2][2] * this->acceleration[2][0];
 	const auto a = r * this->acceleration;
 
 	this->velocity[0][0] += a[0][0] * timedelta;
@@ -143,6 +101,7 @@ void Data::add_message_information(const Message& msg) {
 			break;
 		case MessageType::SPEED:
 			this->set_speed(msg.get_data().front() / 3.6); // [OK] convert to m/s
+			this->velocity[0][0] = this->speed;
 			break;
 		case MessageType::POSITION:
 			this->set_position(msg.get_data());
