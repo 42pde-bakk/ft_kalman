@@ -8,7 +8,7 @@
 #include <string>
 #include <ostream>
 
-typedef int t_time;
+typedef long int t_time;
 
 class Timestamp {
 	union {
