@@ -1,7 +1,7 @@
 #ifndef ARUGMENTS_HPP
 #define ARUGMENTS_HPP
 
-#include <assert.h>
+#include <cassert>
 #include <string>
 #include <iostream>
 
@@ -13,8 +13,7 @@ enum DebugLevel {
 
 class Arguments
 {
-private:
-	char *get_next_argument(size_t &idx, size_t argc, char **argv) {
+	static char *get_next_argument(size_t &idx, const size_t argc, char **argv) {
 		if (idx >= argc) {
 			std::cerr << "ft_kalman: error: " << argv[idx] << " requires a argument" << std::endl;
 			exit(1);
@@ -23,15 +22,13 @@ private:
 	}
 public:
 	unsigned short port = 4242;
-	size_t iter_limit = (size_t)-1;
+	size_t iter_limit = static_cast<size_t>(-1);
 	DebugLevel debug = DebugLevel::None;
 
-	Arguments(int argc, char **argv) {
-		for (size_t i = 0; i < (size_t)argc; i++)
+	Arguments(const int argc, char **argv) {
+		for (size_t i = 0; i < static_cast<size_t>(argc); i++)
 		{
-			auto item = std::string(argv[i]);
-
-			if (item == "-p" || item == "--port") {
+			if (auto item = std::string(argv[i]); item == "-p" || item == "--port") {
 				this->port = std::stoi(get_next_argument(i, argc, argv));
 				assert(this->port > 0 && this->port < 16384);
 			}

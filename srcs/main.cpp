@@ -43,7 +43,6 @@ static bool received_position(const std::vector<Message>& messages) {
 }
 
 int run(const Arguments &args) {
-	std::ofstream statesFile("states.txt", std::ios::trunc);
 	Data data{};
 	KalmanFilter<9, 3, 9>	filter;
 	size_t iterations = 0;
@@ -52,35 +51,30 @@ int run(const Arguments &args) {
 	connection.start();
 
 	std::vector<Message>messages = connection.get_messages();
-	std::cerr << "Received " << messages.size() << " initial messages\n";
 	for (const auto& msg : messages) {
 		messagesFile << msg << '\n';
 		data.add_message_information(msg);
 	}
-
-	Vector3d velocity = data.calculate_velocity();
-	std::cerr << "velocity: " << velocity << "\n";
+	// data.update_velocity(0.1);
 	const Filter::StateVector beginState{
-		data.get_position()[0][0],
-		data.get_speed(),
+		data.get_position(0, 0),
+		data.get_velocity(0, 0),
 		data.get_acceleration(0, 0),
 
-		data.get_position()[0][1],
-		velocity[0][1],
+		data.get_position(0, 1),
+		data.get_velocity(0, 1),
 		data.get_acceleration(0, 1),
 
-		data.get_position()[0][2],
-		velocity[0][2],
+		data.get_position(0, 2),
+		data.get_velocity(0, 2),
 		data.get_acceleration(0, 2),
 	};
-	std::cout << std::setprecision(12) << "State:\n" << beginState << std::endl;
 	filter.set_state(beginState);
 	Timestamp last_timestamp = messages[0].get_timestamp();
 	connection.send_data(filter.get_state());
 
 	while (true) {
 		messages = connection.get_messages();
-		// std::cerr << "Received " << messages.size() << " messages\n";
 		if (messages.empty()) {
 			break;
 		}
@@ -90,29 +84,19 @@ int run(const Arguments &args) {
 		}
 		const Timestamp msg_timestamp = messages[0].get_timestamp();
 		const double timedelta = msg_timestamp.since(last_timestamp);
-		// std::cerr << "timedelta = " << timedelta << "\n";
 
-		// data.update_velocity(timedelta);
-		filter.predict(timedelta); // TODO: do I need to send control data?
+		data.update_velocity(timedelta); // Do we need the velocity for our next steps?
+		filter.predict(timedelta);
 
 		filter.update(filter.H_acceleration, filter.R_acceleration, data.get_acceleration());
 		if (received_position(messages)) {
-			// std::cerr << "We have a position!\n";
 			filter.update(filter.H_position, filter.R_position, data.get_position());
-			statesFile << "Update: ";
-		} else {
-			statesFile << "Predict: ";
 		}
 		connection.send_data(filter.get_state());
 
-		filter.printState(statesFile);
 		iterations++;
 		last_timestamp = msg_timestamp;
-		// std::cerr << "End of loop, state:\n" << filter.get_state() << "\n";
 	}
-
-	// std::cout << "Survived " << iterations << " iterations!" << std::endl;
-
 	return EXIT_SUCCESS;
 }
 

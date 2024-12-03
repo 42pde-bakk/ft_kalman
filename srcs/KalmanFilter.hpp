@@ -76,7 +76,6 @@ public:
 
 private:
     StateVector state{}; // x,xvel,xacc, y,yvel,yacc, z,zvel,zacc
-    // StateVector X_hat{};
     Matrix<double, 9, 9> P{
         {Ppos, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, Pvel, Pmul, 0, 0, 0, 0, 0, 0},
@@ -121,7 +120,6 @@ public:
 
     KalmanGainMatrix update(const CovarianceMatrix &h, const RMatrix &r, const Matrix<double, 3, 1> &z) {
         kalmanGain = this->P * h.transpose() * (h * this->P * h.transpose() + r).pow(-1);
-
         this->state = this->state + kalmanGain * (z - h * this->state);
 
         this->P = (I - kalmanGain * h) * P * (I - kalmanGain * h).transpose() + kalmanGain * r * kalmanGain.transpose();
