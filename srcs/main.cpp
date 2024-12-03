@@ -12,7 +12,7 @@
 #include "Arguments.hpp"
 #include <iomanip>
 
-std::ofstream of("messages.txt", std::ios::trunc);
+std::ofstream messagesFile("messages.txt", std::ios::trunc);
 using Filter = KalmanFilter<9, 3, 9>;
 
 
@@ -43,6 +43,7 @@ static bool received_position(const std::vector<Message>& messages) {
 }
 
 int run(const Arguments &args) {
+	std::ofstream statesFile("states.txt", std::ios::trunc);
 	Data data{};
 	KalmanFilter<9, 3, 9>	filter;
 	size_t iterations = 0;
@@ -53,7 +54,7 @@ int run(const Arguments &args) {
 	std::vector<Message>messages = connection.get_messages();
 	std::cerr << "Received " << messages.size() << " initial messages\n";
 	for (const auto& msg : messages) {
-		std::cerr << "Initial message:\n" << msg << "\n";
+		messagesFile << msg << '\n';
 		data.add_message_information(msg);
 	}
 
@@ -61,7 +62,7 @@ int run(const Arguments &args) {
 	std::cerr << "velocity: " << velocity << "\n";
 	const Filter::StateVector beginState{
 		data.get_position()[0][0],
-		velocity[0][0],
+		data.get_speed(),
 		data.get_acceleration(0, 0),
 
 		data.get_position()[0][1],
@@ -79,13 +80,14 @@ int run(const Arguments &args) {
 
 	while (true) {
 		messages = connection.get_messages();
-		std::cerr << "Received " << messages.size() << " messages\n";
+		// std::cerr << "Received " << messages.size() << " messages\n";
 		if (messages.empty()) {
 			break;
 		}
 		for (const auto& msg : messages) {
-			std::cerr << "Message on iteration " << iterations << ":\n" << msg << "\n";
 			data.add_message_information(msg);
+			messagesFile << msg << '\n';
+			std::cerr << "msg " << msg.get_timestamp() << std::endl;
 		}
 		const Timestamp msg_timestamp = messages[0].get_timestamp();
 		const double timedelta = msg_timestamp.since(last_timestamp);
@@ -98,12 +100,16 @@ int run(const Arguments &args) {
 			std::cerr << "We have a position!\n";
 			const auto K = filter.update(filter.H_position, filter.R_position, data.get_position());
 			(void)K;
+			statesFile << "Update: ";
+		} else {
+			statesFile << "Predict: ";
 		}
 		connection.send_data(filter.get_state());
 
+		filter.printState(statesFile);
 		iterations++;
 		last_timestamp = msg_timestamp;
-		std::cerr << "End of loop, state:\n" << filter.get_state() << "\n";
+		// std::cerr << "End of loop, state:\n" << filter.get_state() << "\n";
 	}
 
 	std::cout << "Survived " << iterations << " iterations!" << std::endl;

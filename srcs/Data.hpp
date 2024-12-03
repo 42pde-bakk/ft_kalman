@@ -34,6 +34,7 @@ public:
 
 	void set_speed(double sp);
 
+	[[nodiscard]] double get_speed() const;
 	[[nodiscard]] const Matrix<double, 3, 1>& get_position() const;
 	[[nodiscard]] const Matrix<double, 3, 1>& get_direction() const;
 	[[nodiscard]] const Matrix<double, 3, 1>& get_acceleration() const;
