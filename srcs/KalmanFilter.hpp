@@ -56,7 +56,7 @@ public:
 
     const RMatrix R_acceleration = RMatrix::diag<3>(ACCELEROMETER_NOISE);
     const RMatrix R_position = RMatrix::diag<3>(GPS_NOISE);
-    const RMatrix R_velocity = RMatrix::diag<3>(GYROSCOPE_NOISE);
+    const RMatrix R_velocity = RMatrix::diag<3>(GYROSCOPE_NOISE / ACCELEROMETER_NOISE);
     const Matrix<double, 9, 9> I = Matrix<double, 9, 9>::identity<9>();
     const CovarianceMatrix H_velocity{
         {0, 1, 0, 0, 0, 0, 0, 0, 0},

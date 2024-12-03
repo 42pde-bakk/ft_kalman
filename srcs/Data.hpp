@@ -34,12 +34,13 @@ public:
 	void set_speed(double sp);
 
 	[[nodiscard]] double get_speed() const;
-	[[nodiscard]] const Matrix<double, 3, 1>& get_position() const;
+	[[nodiscard]] const Vector3d& get_position() const;
 	[[nodiscard]] double get_position(size_t row_nb, size_t col_nb) const;
-	[[nodiscard]] const Matrix<double, 3, 1>& get_direction() const;
+	[[nodiscard]] const Vector3d& get_direction() const;
 	[[nodiscard]] double get_direction(size_t row_nb, size_t col_nb) const;
-	[[nodiscard]] const Matrix<double, 3, 1>& get_acceleration() const;
+	[[nodiscard]] const Vector3d& get_acceleration() const;
 	[[nodiscard]] double get_acceleration(size_t row_nb, size_t col_nb) const;
+	[[nodiscard]] const Vector3d& get_velocity() const;
 	[[nodiscard]] double get_velocity(size_t row_nb, size_t col_nb) const;
 	void update_velocity(double timedelta);
 
