@@ -140,7 +140,6 @@ std::vector<Message> UdpConnection::get_messages() {
         if (buffer.starts_with("MSG_END")) {
             break;
         }
-
         messages.emplace_back(buffer);
 
         idx++;

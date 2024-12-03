@@ -120,6 +120,8 @@ public:
     }
 
     KalmanGainMatrix update(const CovarianceMatrix &h, const RMatrix &r, const Matrix<double, 3, 1> &z) {
+        kalmanGain = this->P * h.transpose() * (h * this->P * h.transpose() + r).pow(-1);
+
         this->state = this->state + kalmanGain * (z - h * this->state);
 
         this->P = (I - kalmanGain * h) * P * (I - kalmanGain * h).transpose() + kalmanGain * r * kalmanGain.transpose();

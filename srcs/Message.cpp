@@ -21,7 +21,10 @@ MessageType parseMessageTypeFromString(const std::string& str) {
 		return MessageType::DIRECTION;
 	} else if (str == "TRUE POSITION") {
 		return MessageType::TRUE_POSITION;
+	}else if (str == "POSITION") {
+		return MessageType::POSITION;
 	}
+	assert(false);
 	return MessageType::MSG_END;
 }
 
@@ -89,8 +92,9 @@ std::string MessageTypeToString(MessageType type) {
 			"SPEED",
 			"ACCELERATION",
 			"DIRECTION",
-			"TRUE_POSITION"
+			"TRUE_POSITION",
+			"POSITION"
 	};
 
-	return (strings[(int) type]);
+	return (strings[static_cast<int>(type)]);
 }
