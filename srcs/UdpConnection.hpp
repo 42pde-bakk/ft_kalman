@@ -6,7 +6,6 @@
 #include "KalmanFilter.hpp"
 #include <vector>
 #include <sys/epoll.h>
-#include <unistd.h>
 
 #define MAX_EPOLL_EVENTS 8
 

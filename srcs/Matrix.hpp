@@ -45,18 +45,6 @@ public:
 		this->data = rhs.data;
 	}
 
-	// Generic constructor for containers
-	// template <typename Container>
-	// Matrix(const Container& data_in,
-	//        std::enable_if_t<is_container<Container>::value>* = nullptr) {
-	// 	assert(data_in.size() == ROW_AMOUNT);
-	// 	size_t row = 0;
-	// 	for (auto& row_list : data_in) {
-	// 		assert(data_in.size() == COLUMN_AMOUNT);
-	// 		std::copy(row_list.begin(), row_list.end(), this->data[row].begin());
-	// 		++row;
-	// 	}
-	// }
 	Matrix(std::initializer_list<std::initializer_list<T>> init_list) {
 		assert(init_list.size() == ROW_AMOUNT);
 		size_t row = 0;
@@ -66,7 +54,6 @@ public:
 			++row;
 		}
 	}
-
 
 	// Constructor for creating a vector (1-column matrix)
 	template <typename Container>
@@ -80,7 +67,6 @@ public:
 		assert(COLUMN_AMOUNT == 1);
 		std::copy(data_in.begin(), data_in.end(), this->data[0].begin());
 	}
-
 
 	Matrix(T n) {
 		for (size_t row = 0; row < ROW_AMOUNT; row++) {

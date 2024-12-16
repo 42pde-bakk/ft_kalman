@@ -112,6 +112,5 @@ void Data::add_message_information(const Message& msg) {
 			break;
 		default:
 			assert(false);
-			break;
 	}
 }

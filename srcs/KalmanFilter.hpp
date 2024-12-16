@@ -7,7 +7,6 @@
 
 #include <fstream>
 #include "Matrix.hpp"
-#include "Data.hpp"
 
 #define NOISE 1
 #define GPS_NOISE 0.1
