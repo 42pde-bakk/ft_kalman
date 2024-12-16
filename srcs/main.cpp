@@ -12,7 +12,6 @@
 #include "Arguments.hpp"
 #include <iomanip>
 
-std::ofstream messagesFile("messages.txt", std::ios::trunc);
 using Filter = KalmanFilter<9, 3, 9>;
 
 static bool received_position(const std::vector<Message>& messages) {
@@ -31,7 +30,6 @@ int run(const Arguments &args) {
 
 	std::vector<Message> messages = connection.get_messages();
 	for (const auto& msg : messages) {
-		messagesFile << msg << '\n';
 		data.add_message_information(msg);
 	}
 
@@ -59,7 +57,6 @@ int run(const Arguments &args) {
 		}
 		for (const auto& msg : messages) {
 			data.add_message_information(msg);
-			messagesFile << msg << '\n';
 		}
 		const Timestamp msg_timestamp = messages[0].get_timestamp();
 		const double time_delta = msg_timestamp.since(last_timestamp);
