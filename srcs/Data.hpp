@@ -16,6 +16,12 @@ class Data {
 	Vector3d velocity;
 	double speed{0.0};
 
+private:
+	void set_position(const std::vector<double>& vec);
+	void set_direction(const std::vector<double>& vec);
+	void set_acceleration(const std::vector<double>& vec);
+	void set_speed(double sp);
+
 public:
 	Data() = default;
 
@@ -24,14 +30,6 @@ public:
 	Data& operator=(const Data&) = default;
 
 	~Data() = default;
-
-	void set_position(const std::vector<double>& vec);
-
-	void set_direction(const std::vector<double>& vec);
-
-	void set_acceleration(const std::vector<double>& vec);
-
-	void set_speed(double sp);
 
 	[[nodiscard]] double get_speed() const;
 	[[nodiscard]] const Vector3d& get_position() const;

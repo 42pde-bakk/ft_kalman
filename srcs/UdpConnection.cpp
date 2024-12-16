@@ -19,10 +19,18 @@ int UdpConnection::get_socket_fd() {
 int UdpConnection::get_epoll_fd(const int socket_fd) {
     const int epoll_fd = epoll_create(1);
 
+	if (epoll_fd == -1) {
+		perror("epoll_create");
+		exit(EXIT_FAILURE);
+	}
+
     epoll_event event{};
     event.events = EPOLLIN; // Can append "|EPOLLOUT" for write events as well
     event.data.fd = socket_fd;
-    epoll_ctl(epoll_fd, EPOLL_CTL_ADD, socket_fd, &event);
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, socket_fd, &event)) {
+		perror("epoll_ctl");
+		exit(EXIT_FAILURE);
+	}
 
     return epoll_fd;
 }
@@ -50,19 +58,21 @@ void UdpConnection::perform_handshake() {
         );
 
         if (result == -1) {
-            perror("sendto");
+			perror("sendto");
             exit(EXIT_FAILURE);
         }
 
         const int epoll_res = epoll_wait(this->epoll_fd, this->events, MAX_EPOLL_EVENTS, 2000);
         if (epoll_res == -1) {
-            perror("epoll");
+			perror("epoll_wait");
+			exit(EXIT_FAILURE);
         }
 
         if (epoll_res == 0) {
             std::cout << "No handshake received yet.." << std::endl;
         }
         else {
+            std::cout << "Handshake received. Starting." << std::endl;
             break;
         }
     }
@@ -73,6 +83,11 @@ UdpConnection::UdpConnection(const unsigned short port) {
     this->socket_fd = UdpConnection::get_socket_fd();
     this->epoll_fd = UdpConnection::get_epoll_fd(this->socket_fd);
     this->init_serveraddr();
+}
+
+UdpConnection::~UdpConnection() {
+	close(this->socket_fd);
+	close(this->epoll_fd);
 }
 
 void UdpConnection::start() {
@@ -96,6 +111,7 @@ std::vector<Message> UdpConnection::get_messages() {
         const int epoll_res = epoll_wait(this->epoll_fd, this->events, MAX_EPOLL_EVENTS, 1000);
         if (epoll_res == -1) {
             perror("epoll");
+			exit(EXIT_FAILURE);
         }
 
         if (epoll_res == 0 && idx == 0) {
@@ -120,18 +136,17 @@ std::vector<Message> UdpConnection::get_messages() {
             perror("recvfrom");
             exit(EXIT_FAILURE);
         }
-        if (res == 0) {
+        if (res == 0 || buffer.starts_with("GOODBYE.")) {
+			std::cout << "Finished." << std::endl;
             exit(EXIT_SUCCESS);
         }
-
-        // std::cout << "buff: " << buffer << std::endl;
 
         if (buffer.starts_with("Trajectory") || buffer.starts_with("Sending")) {
             continue;
         }
         if (idx == 0 && !buffer.starts_with("MSG_START")) {
             std::cerr << "Error: no start packet" << std::endl;
-            exit(1);
+            exit(EXIT_FAILURE);
         }
         if (buffer.starts_with("MSG_START")) {
             idx++;

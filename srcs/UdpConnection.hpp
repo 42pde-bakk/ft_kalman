@@ -6,6 +6,7 @@
 #include "KalmanFilter.hpp"
 #include <vector>
 #include <sys/epoll.h>
+#include <unistd.h>
 
 #define MAX_EPOLL_EVENTS 8
 
@@ -27,7 +28,7 @@ class UdpConnection {
 public:
 	UdpConnection(const UdpConnection& rhs) = default;
 	UdpConnection(unsigned short port);
-	~UdpConnection() = default;
+	~UdpConnection();
 
 	void start();
 

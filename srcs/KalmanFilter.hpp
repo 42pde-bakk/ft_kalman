@@ -9,14 +9,6 @@
 #include "Matrix.hpp"
 #include "Data.hpp"
 
-//#define n 9 // n is the amount of state variables
-//// n: 3 positions, 3 directions, 3 accelerations
-//// n: [x, y, z, dir, v, acc_x, acc_y, acc_z] (no direction because they won't ever change)
-//#define p 3 // p is the amount of inputs
-//// p: []
-//#define m 3 // m is the amount of outputs
-//// m: []
-
 #define NOISE 1
 #define GPS_NOISE 0.1
 #define GYROSCOPE_NOISE 0.01
