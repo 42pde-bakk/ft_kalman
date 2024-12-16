@@ -72,6 +72,7 @@ void UdpConnection::perform_handshake() {
             std::cout << "No handshake received yet.." << std::endl;
         }
         else {
+            std::cout << "Handshake received. Starting." << std::endl;
             break;
         }
     }
@@ -135,11 +136,10 @@ std::vector<Message> UdpConnection::get_messages() {
             perror("recvfrom");
             exit(EXIT_FAILURE);
         }
-        if (res == 0) {
+        if (res == 0 || buffer.starts_with("GOODBYE.")) {
+			std::cout << "Finished." << std::endl;
             exit(EXIT_SUCCESS);
         }
-
-        // std::cout << "buff: " << buffer << std::endl;
 
         if (buffer.starts_with("Trajectory") || buffer.starts_with("Sending")) {
             continue;
