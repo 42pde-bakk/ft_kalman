@@ -5,6 +5,7 @@
 
 #include <cstring>
 #include <iostream>
+#include <unistd.h>
 
 int UdpConnection::get_socket_fd() {
     const int socket_fd = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK, 0);
