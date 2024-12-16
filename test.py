@@ -34,8 +34,12 @@ def run_thread(idx):
 
         sleep(1)
 
+        # client = subprocess.Popen(
+        #     ["python3", "kalman.py", str(4242 + idx)], stdout=subprocess.DEVNULL
+        # )
+
         client = subprocess.Popen(
-            ["python3", "kalman.py", str(4242 + idx)], stdout=subprocess.DEVNULL
+            ["./ft_kalman", "-p", str(4242 + idx)], stdout=subprocess.DEVNULL
         )
 
         output = str(server.stdout.read(), "utf-8").split("\n")[2:-1]
