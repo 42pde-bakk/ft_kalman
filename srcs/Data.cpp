@@ -109,7 +109,9 @@ void Data::add_message_information(const Message& msg) {
 			break;
 		case MessageType::POSITION:
 			this->set_position(msg.get_data());
+			break;
 		default:
+			assert(false);
 			break;
 	}
 }
