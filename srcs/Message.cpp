@@ -2,10 +2,10 @@
 // Created by peer on 23-2-24.
 //
 
+#include "Message.hpp"
 #include <iostream>
 #include <sstream>
 #include <cstring>
-#include "Message.hpp"
 #include <cassert>
 
 MessageType parseMessageTypeFromString(const std::string& str) {
@@ -44,9 +44,10 @@ Message::Message(const std::string& msg) {
 		assert(newlinepos != std::string::npos);
 
 		this->_timestamp.set(msg.substr(fpos + 1, lpos - fpos - 1));
+
 		const auto type = msg.substr(lpos + 1, newlinepos - lpos - 1);
 		this->_messageType = parseMessageTypeFromString(type);
-//		std::cerr << "timestamp: {" << _timestamp << "}, msgtype = " << type << "!\n";
+
 		const char* start = msg.c_str() + newlinepos + 1;
 		char* pend;
 		do {
@@ -54,10 +55,6 @@ Message::Message(const std::string& msg) {
 			this->data.push_back(d);
 			start = pend + 1;
 		} while (strlen(pend) > 1);
-
-//		for (const auto& d : this->data) {
-//			printf("\td = %f\n", d);
-//		}
 	}
 }
 
