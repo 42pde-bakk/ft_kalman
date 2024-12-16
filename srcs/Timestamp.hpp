@@ -6,7 +6,6 @@
 #define FT_KALMAN_TIMESTAMP_HPP
 #include <iostream>
 #include <string>
-#include <ostream>
 
 typedef long int t_time;
 

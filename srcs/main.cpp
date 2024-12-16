@@ -1,16 +1,11 @@
 #include <algorithm>
 
 #include "UdpConnection.hpp"
-#include <iostream>
 #include <arpa/inet.h>
-#include <cstring>
-#include <cstdio>
 #include "Message.hpp"
 #include "Data.hpp"
 #include "KalmanFilter.hpp"
-#include <fstream>
 #include "Arguments.hpp"
-#include <iomanip>
 
 using Filter = KalmanFilter<9, 3, 9>;
 

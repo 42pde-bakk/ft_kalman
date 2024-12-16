@@ -16,7 +16,6 @@ class Data {
 	Vector3d velocity;
 	double speed{0.0};
 
-private:
 	void set_position(const std::vector<double>& vec);
 	void set_direction(const std::vector<double>& vec);
 	void set_acceleration(const std::vector<double>& vec);

@@ -3,7 +3,6 @@
 //
 
 #include "Message.hpp"
-#include <iostream>
 #include <sstream>
 #include <cstring>
 #include <cassert>
