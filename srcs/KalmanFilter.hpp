@@ -29,45 +29,44 @@ class KalmanFilter {
 public:
     using StateVector = Matrix<double, Nx, 1>;
     using MeasurementVector = Matrix<double, Nz, 1>;
-    using StateTransitionMatrix = Matrix<double, Nx, Nx>;
-    using InputVector = Matrix<double, Nz, 1>;
-    using ControlMatrix = Matrix<double, Nx, Nu>;
     using EstimateCovarianceMatrix = Matrix<double, Nx, Nx>;
-    using ProcessNoiseCovariance = Matrix<double, Nx, Nx>;
-    using MeasurementCovariance = Matrix<double, Nz, Nz>;
-    using ProcessNoiseVector = Matrix<double, Nx, 1>;
-    using MeasurementNoiseVector = Matrix<double, Nz, 1>;
     using ObservationMatrix = Matrix<double, Nz, Nx>;
     using KalmanGainMatrix = Matrix<double, Nx, Nz>;
+    // using ProcessNoiseCovariance = Matrix<double, Nx, Nx>;
+    // using MeasurementCovariance = Matrix<double, Nz, Nz>;
+    // using ProcessNoiseVector = Matrix<double, Nx, 1>;
+    // using MeasurementNoiseVector = Matrix<double, Nz, 1>;
+    // using StateTransitionMatrix = Matrix<double, Nx, Nx>;
+    // using InputVector = Matrix<double, Nz, 1>;
+    // using ControlMatrix = Matrix<double, Nx, Nu>;
 
-    using CovarianceMatrix = Matrix<double, 3, 9>;
-    using RMatrix = Matrix<double, 3, 3>;
-    using FMatrix = Matrix<double, 9, 9>;
+    using RMatrix = Matrix<double, Nz, Nz>;
+    using FMatrix = Matrix<double, Nx, Nx>;
     using QMatrix = FMatrix;
 
-    const RMatrix R_acceleration = RMatrix::diag<3>(ACCELEROMETER_NOISE);
-    const RMatrix R_position = RMatrix::diag<3>(GPS_NOISE);
-    const RMatrix R_velocity = RMatrix::diag<3>(GYROSCOPE_NOISE / ACCELEROMETER_NOISE);
-    const Matrix<double, 9, 9> I = Matrix<double, 9, 9>::identity<9>();
-    const CovarianceMatrix H_velocity{
+    const RMatrix R_acceleration = RMatrix::template diag<3>(ACCELEROMETER_NOISE);
+    const RMatrix R_position = RMatrix::template diag<3>(GPS_NOISE);
+    const RMatrix R_velocity = RMatrix::template diag<3>(GYROSCOPE_NOISE / ACCELEROMETER_NOISE);
+    const Matrix<double, Nx, Nx> I = Matrix<double, 9, 9>::identity<9>();
+    const ObservationMatrix H_velocity{
         {0, 1, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 1, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 1, 0},
     };
-    const CovarianceMatrix H_acceleration{
+    const ObservationMatrix H_acceleration{
         {0, 0, 1, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 1, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 0, 0, 1},
     };
-    const CovarianceMatrix H_position{
+    const ObservationMatrix H_position{
         {1, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, 0, 0, 1, 0, 0, 0, 0, 0},
         {0, 0, 0, 0, 0, 0, 1, 0, 0},
     };
 
 private:
-    StateVector state{}; // x,xvel,xacc, y,yvel,yacc, z,zvel,zacc
-    Matrix<double, 9, 9> P{
+    StateVector state; // x,xvel,xacc, y,yvel,yacc, z,zvel,zacc
+    EstimateCovarianceMatrix P{
         {Ppos, 0, 0, 0, 0, 0, 0, 0, 0},
         {0, Pvel, Pmul, 0, 0, 0, 0, 0, 0},
         {0, Pmul, Pacl, 0, 0, 0, 0, 0, 0},
@@ -84,7 +83,7 @@ public:
     // Also known as the TransitionMatrix
     static FMatrix makeFMatrix(const double timedelta) {
         const double vel = timedelta * timedelta * 0.5;
-        FMatrix result = FMatrix::identity<9>();
+        FMatrix result = FMatrix::template identity<9>();
         for (size_t i = 0; i < 3; i++) {
             result[i * 3][i * 3 + 1] = timedelta;
             result[i * 3][i * 3 + 2] = vel;
@@ -93,7 +92,7 @@ public:
         return (result);
     }
 
-    static QMatrix makeQMatrix(const FMatrix &f) {
+    static QMatrix makeQMatrix(const FMatrix& f) {
         QMatrix q;
         for (size_t i = 0; i < 3; i++) {
             q[i * 3 + 2][i * 3 + 2] = 1;
@@ -109,7 +108,7 @@ public:
         this->P = (F * this->P * F.transpose()) + q;
     }
 
-    KalmanGainMatrix update(const CovarianceMatrix &h, const RMatrix &r, const Matrix<double, 3, 1> &z) {
+    KalmanGainMatrix update(const ObservationMatrix& h, const RMatrix& r, const MeasurementVector& z) {
         kalmanGain = this->P * h.transpose() * (h * this->P * h.transpose() + r).pow(-1);
         this->state = this->state + kalmanGain * (z - h * this->state);
 
@@ -118,7 +117,7 @@ public:
         return kalmanGain;
     }
 
-    void set_state(const StateVector &stateVector) {
+    void set_state(const StateVector& stateVector) {
         this->state = stateVector;
     }
 
